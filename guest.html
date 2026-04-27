@@ -151,7 +151,7 @@
 
     .hd-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.2rem, 8vw, 3.6rem);
+      font-size: clamp(2rem, 7vw, 3.2rem);
       font-weight: 200;
       line-height: 1.05;
       letter-spacing: .02em;
@@ -330,7 +330,7 @@
 
     .res-name {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.8rem, 7vw, 2.6rem);
+      font-size: clamp(1.6rem, 6vw, 2.2rem);
       font-weight: 200;
       line-height: 1.1;
       margin-bottom: 1.2rem;
@@ -427,7 +427,7 @@
 
     .tbl-n {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 3.2rem;
+      font-size: 2.6rem;
       font-weight: 200;
       color: #fff;
       line-height: 1;
@@ -498,40 +498,6 @@
     }
 
     .map-legend span {
-      color: var(--ac);
-    }
-
-    .map-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .6rem 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, .06);
-    }
-
-    .map-header-title {
-      font-size: .72rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, .6);
-    }
-
-    .map-close-btn {
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, .55);
-      cursor: pointer;
-      font-size: 1.2rem;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color .2s;
-    }
-
-    .map-close-btn:hover {
       color: var(--ac);
     }
 
@@ -702,10 +668,6 @@
     <!-- MAP -->
     <div class="map-section" id="map-section">
       <div class="map-body open" id="map-body">
-        <div class="map-header">
-          <span class="map-header-title">Plano de mesas</span>
-          <button class="map-close-btn" onclick="toggleMap()">×</button>
-        </div>
         <canvas id="guest-map-canvas"></canvas>
         <div class="map-legend">Tu mesa está <span>resaltada</span> — puedes hacer zoom con dos dedos</div>
       </div>

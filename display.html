@@ -56,7 +56,7 @@
       pointer-events: none;
     }
 
-    /* LAYOUT — VERTICAL */
+    /* LAYOUT — VERTICAL: imagen arriba, QR abajo */
     .screen {
       position: fixed;
       inset: 0;
@@ -68,27 +68,32 @@
       padding: 0;
     }
 
-    /* TOP BAR */
+    /* TOP BAR — ocupa la mayor parte, nombre del evento grande */
     .top {
-      padding: 5vh 6vw 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6vh 6vw 2vh;
       text-align: center;
       width: 100%;
     }
 
     .ev-type {
       display: inline-block;
-      font-size: clamp(0.45rem, 1vw, 0.65rem);
+      font-size: clamp(0.5rem, 1.2vw, 0.75rem);
       letter-spacing: 0.3em;
       text-transform: uppercase;
       color: rgba(255, 255, 255, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 4px 14px;
-      margin-bottom: 1.2vh;
+      padding: 5px 16px;
+      margin-bottom: 1.8vh;
     }
 
     .ev-name {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.6rem, 5vw, 3.8rem);
+      font-size: clamp(2rem, 7vw, 5rem);
       font-weight: 200;
       color: #fff;
       line-height: 1.05;
@@ -101,20 +106,28 @@
     }
 
     .ev-date {
-      font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+      font-size: clamp(0.65rem, 1.4vw, 0.9rem);
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: rgba(255, 255, 255, 0.45);
-      margin-top: 0.8vh;
+      margin-top: 1vh;
     }
 
-    /* MIDDLE — QR */
+    /* MIDDLE — oculto en vertical (QR va abajo) */
     .mid {
-      flex: 1;
+      display: none;
+    }
+
+    /* BOTTOM — donde vive el QR */
+    .bot {
+      width: 100%;
+      padding: 2vh 6vw 5vh;
+      text-align: center;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 2vh 0;
+      gap: 1.2vh;
     }
 
     .qr-card {
@@ -126,9 +139,9 @@
 
     .qr-frame {
       position: relative;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(12px);
     }
 
@@ -136,8 +149,8 @@
     .qr-frame::after {
       content: '';
       position: absolute;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
 
     .qr-frame::before {
@@ -155,8 +168,8 @@
     }
 
     .qr-inner {
-      width: 200px;
-      height: 200px;
+      width: var(--qr-size, 200px);
+      height: var(--qr-size, 200px);
       background: #fff;
       display: flex;
       align-items: center;
@@ -164,11 +177,11 @@
     }
 
     .qr-scan {
-      font-size: clamp(0.55rem, 1vw, 0.68rem);
+      font-size: clamp(0.6rem, 1.2vw, 0.78rem);
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.45);
-      margin-top: 14px;
+      color: rgba(255, 255, 255, 0.55);
+      margin-top: 12px;
       text-align: center;
     }
 
@@ -176,41 +189,33 @@
       color: var(--ac, #b8973a);
       display: block;
       font-weight: 300;
-      font-size: 1.1em;
-      margin-bottom: 2px;
-    }
-
-    /* BOTTOM */
-    .bot {
-      padding: 0 6vw 4vh;
-      text-align: center;
-      width: 100%;
+      font-size: 1.15em;
+      margin-bottom: 3px;
     }
 
     .welcome {
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
-      font-size: clamp(0.9rem, 2.2vw, 1.4rem);
+      font-size: clamp(0.8rem, 1.8vw, 1.2rem);
       font-weight: 300;
-      color: rgba(255, 255, 255, 0.75);
+      color: rgba(255, 255, 255, 0.65);
       line-height: 1.5;
-      max-width: 600px;
+      max-width: 500px;
       margin: 0 auto;
     }
 
     .powered {
-      font-size: clamp(0.45rem, 0.9vw, 0.58rem);
+      font-size: clamp(0.45rem, 0.8vw, 0.55rem);
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.2);
-      margin-top: 1.5vh;
+      color: rgba(255, 255, 255, 0.18);
     }
 
     .deco-line {
       width: 40px;
       height: 1px;
       background: linear-gradient(90deg, transparent, var(--ac, #b8973a), transparent);
-      margin: 1.2vh auto;
+      margin: 0.8vh auto;
     }
 
     /* HORIZONTAL LAYOUT */
@@ -223,38 +228,34 @@
       padding: 5vh 4vw;
       text-align: left;
       width: auto;
-      flex: 1.2;
-      display: flex;
-      flex-direction: column;
+      flex: 1.4;
       justify-content: center;
     }
 
     body.horiz .mid {
-      flex: 1;
-      padding: 0;
+      display: none;
     }
 
     body.horiz .bot {
+      flex: 1;
       padding: 5vh 4vw;
-      text-align: left;
-      width: auto;
-      flex: 1.2;
-      display: flex;
-      flex-direction: column;
       justify-content: center;
+      background: linear-gradient(to left, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+      gap: 2vh;
     }
 
     body.horiz .qr-inner {
-      width: 220px;
-      height: 220px;
+      width: var(--qr-size, 220px);
+      height: var(--qr-size, 220px);
     }
 
     body.horiz .deco-line {
-      margin: 1.2vh 0;
+      margin: 1vh 0;
     }
 
     body.horiz .welcome {
       max-width: 100%;
+      text-align: left;
     }
 
     /* LOADING */
@@ -354,13 +355,20 @@
   <canvas id="ac"></canvas>
 
   <div class="screen" id="screen">
+    <!-- TOP: foto/imagen del evento, nombre grande -->
     <div class="top">
       <div class="ev-type" id="d-type">Evento</div>
       <div class="ev-name" id="d-name">—</div>
       <div class="ev-date" id="d-date"></div>
     </div>
 
-    <div class="mid">
+    <!-- MID: oculto en vertical -->
+    <div class="mid"></div>
+
+    <!-- BOT: QR abajo, como en la foto de ejemplo -->
+    <div class="bot">
+      <div class="welcome" id="d-welcome">Bienvenido a esta noche tan especial</div>
+      <div class="deco-line"></div>
       <div class="qr-card">
         <div class="qr-frame" style="position:relative;">
           <div class="pulse-ring" id="pr1"></div>
@@ -368,14 +376,10 @@
           <div class="qr-inner" id="qr-display"></div>
         </div>
         <div class="qr-scan">
-          <strong id="d-scan-title">Escanea para encontrar tu mesa</strong><span id="d-scan-sub">Abre la cámara de tu celular</span>
+          <strong id="d-scan-title">Escanea para encontrar tu mesa</strong>
+          <span id="d-scan-sub">Abre la cámara de tu celular</span>
         </div>
       </div>
-    </div>
-
-    <div class="bot">
-      <div class="deco-line"></div>
-      <div class="welcome" id="d-welcome">Bienvenido a esta noche tan especial</div>
       <div class="powered">MesaQR · by Invitaciones4You</div>
     </div>
   </div>
@@ -427,7 +431,9 @@ function applyBg(){
 
 function buildQR(){
   const url=`${location.origin}${location.pathname.replace('display.html','guest.html')}?event=${EID}`;
-  const size=ev.orientation==='horizontal'?220:200;
+  const size=ev.qr_size||200;
+  // Set CSS variable for dynamic sizing
+  document.documentElement.style.setProperty('--qr-size', size+'px');
   document.getElementById('qr-display').innerHTML='';
   try{new QRCode(document.getElementById('qr-display'),{text:url,width:size,height:size,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}
 }

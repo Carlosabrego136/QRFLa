@@ -31,7 +31,7 @@
     }
 
     html {
-      font-size: 14px;
+      font-size: 16px;
     }
 
     body {
@@ -159,7 +159,7 @@
 
     .topbar-t {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       font-weight: 300;
     }
 
@@ -189,7 +189,7 @@
 
     .stat-n {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 2.8rem;
+      font-size: 2.2rem;
       font-weight: 300;
       line-height: 1;
     }
@@ -223,7 +223,7 @@
 
     .st {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
+      font-size: 1.3rem;
       font-weight: 300;
     }
 
@@ -305,8 +305,8 @@
 
     /* BUTTONS */
     .btn {
-      padding: 7px 16px;
-      font-size: 0.68rem;
+      padding: 9px 18px;
+      font-size: 0.78rem;
       letter-spacing: 0.08em;
       cursor: pointer;
       border: none;
@@ -405,7 +405,7 @@
 
     .mo-t {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 300;
     }
 
@@ -440,8 +440,8 @@
     }
 
     .tab {
-      padding: 10px 18px;
-      font-size: 0.65rem;
+      padding: 12px 20px;
+      font-size: 0.72rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       cursor: pointer;
@@ -470,7 +470,7 @@
 
     .fi label {
       display: block;
-      font-size: 0.58rem;
+      font-size: 0.68rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--gray);
@@ -481,11 +481,11 @@
     .fi select,
     .fi textarea {
       width: 100%;
-      padding: 9px 11px;
+      padding: 10px 12px;
       border: 1px solid var(--line);
       background: #fff;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       color: var(--ink);
       outline: none;
       transition: border-color 0.15s;
@@ -579,22 +579,22 @@
     .gt {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
     }
 
     .gt th {
-      font-size: 0.56rem;
+      font-size: 0.65rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
       color: var(--gray);
-      padding: 7px 5px;
+      padding: 9px 6px;
       border-bottom: 1px solid var(--line);
       text-align: left;
       font-weight: 400;
     }
 
     .gt td {
-      padding: 6px 5px;
+      padding: 8px 6px;
       border-bottom: 1px solid var(--line2);
     }
 
@@ -771,48 +771,216 @@
       margin-bottom: 10px;
     }
 
-    /* PREVIEW DISPLAY */
-    .preview-wrap {
-      width: 100%;
-      height: 300px;
+    /* MAP TOOLS EXTRAS */
+    .map-entry-row {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      padding: 6px 0 2px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line2);
+      margin-top: 4px;
+    }
+
+    .map-entry-row label {
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-right: 2px;
+    }
+
+    .entry-btn {
+      padding: 4px 10px;
+      font-size: 0.65rem;
       border: 1px solid var(--line);
       background: var(--paper);
-      margin: 16px 0;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .entry-btn:hover {
+      border-color: var(--ink);
+    }
+
+    .entry-btn.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    /* Shape picker */
+    .shape-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .shape-opt {
+      padding: 4px 10px;
+      font-size: 0.65rem;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .shape-opt:hover {
+      border-color: var(--ink);
+    }
+
+    .shape-opt.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    /* Display preview */
+    .disp-preview-wrap {
       position: relative;
+      width: 100%;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      background: #111;
       overflow: hidden;
     }
 
-    .preview-wrap iframe {
+    .disp-preview-wrap.vert {
+      aspect-ratio: 9/16;
+      max-width: 240px;
+      margin: 12px auto;
+    }
+
+    .disp-preview-wrap.horiz {
+      aspect-ratio: 16/9;
+    }
+
+    .disp-preview-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5%;
+      color: #fff;
+    }
+
+    .disp-preview-inner.horiz {
+      flex-direction: row;
+    }
+
+    .disp-prev-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .disp-prev-bg img,
+    .disp-prev-bg video {
       width: 100%;
       height: 100%;
-      border: none;
+      object-fit: cover;
+      opacity: 0.45;
     }
 
-    /* QR SIZE CONTROL */
-    .qr-size-ctrl {
+    .disp-prev-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
       display: flex;
-      gap: 12px;
+      flex-direction: column;
       align-items: center;
-      margin-bottom: 12px;
+      justify-content: space-between;
+      height: 100%;
     }
 
-    .qr-size-ctrl label {
-      font-size: 0.6rem;
+    .disp-prev-content.horiz {
+      flex-direction: row;
+    }
+
+    .disp-prev-top {
+      text-align: center;
+      flex: 1;
+    }
+
+    .disp-prev-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.7rem;
+      font-weight: 300;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .disp-prev-type {
+      font-size: 0.4rem;
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--gray);
+      opacity: 0.6;
+      margin-bottom: 2px;
     }
 
-    .qr-size-ctrl input[type="range"] {
+    .disp-prev-qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1.2;
+    }
+
+    .disp-prev-qr {
+      background: #fff;
+      padding: 4px;
+    }
+
+    .disp-prev-scan {
+      font-size: 0.35rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    .disp-prev-bot {
+      text-align: center;
       flex: 1;
-      max-width: 200px;
     }
 
-    .qr-size-display {
-      font-size: 0.75rem;
+    .disp-prev-welcome {
+      font-size: 0.38rem;
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    .qr-size-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .qr-size-row label {
+      font-size: 0.65rem;
       color: var(--gray);
-      min-width: 60px;
-      text-align: right;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .qr-size-row input[type=range] {
+      flex: 1;
+    }
+
+    .qr-size-val {
+      font-size: 0.72rem;
+      font-family: 'DM Mono', monospace;
+      color: var(--ink);
+      min-width: 42px;
     }
   </style>
 </head>
@@ -1015,15 +1183,29 @@
         <!-- T3 MAPA -->
         <div id="t3" style="display:none">
           <div class="map-tb">
-            <select id="ms" onchange="mShape=this.value;drawMap()" style="font-size:0.7rem;">
-          <option value="round">⭕ Redonda</option>
-          <option value="rect">▬ Rectangular</option>
-        </select>
-            <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:66px;">
+            <div class="shape-row" id="shape-row">
+              <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
+              <div class="shape-opt active" data-s="round" onclick="setShape(this,'round')">⭕ Redonda</div>
+              <div class="shape-opt" data-s="rect" onclick="setShape(this,'rect')">▬ Rect.</div>
+              <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
+              <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
+            </div>
+          </div>
+          <div class="map-tb">
+            <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
             <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
             <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
-            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
+            <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
+          </div>
+          <div class="map-entry-row">
+            <label>Marcadores:</label>
+            <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 + Entrada</div>
+            <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">↩ + Salida</div>
+            <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 + Escenario</div>
+            <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 + Barra</div>
+            <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 + Pista</div>
+            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Selecciona un marcador y haz clic en el mapa</span>
           </div>
           <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
@@ -1034,25 +1216,33 @@
 
         <!-- T4 QR -->
         <div id="t4" style="display:none">
-          <div class="fi"><label>Tamaño del QR</label>
-            <div class="qr-size-ctrl">
-              <input type="range" id="qr-size" min="100" max="400" value="176" oninput="updateQRSize(this.value)" step="20">
-              <span class="qr-size-display"><span id="qr-size-val">176</span>px</span>
+
+          <!-- PREVIEW DEL DISPLAY -->
+          <div class="fi">
+            <label>Vista previa de la pantalla</label>
+            <div id="disp-preview-container">
+              <!-- se genera dinámicamente -->
             </div>
           </div>
+
+          <!-- TAMAÑO QR -->
+          <div class="fi">
+            <label>Tamaño del QR en pantalla</label>
+            <div class="qr-size-row">
+              <input type="range" id="qr-size-range" min="120" max="400" value="200" step="10" oninput="updateQRSize(this.value)">
+              <span class="qr-size-val" id="qr-size-val">200px</span>
+            </div>
+          </div>
+
+          <!-- QR REAL -->
           <div class="qr-box">
-            <p style="font-size:0.68rem;color:var(--gray);margin-bottom:10px;">URL para invitados:</p>
+            <p style="font-size:0.72rem;color:var(--gray);margin-bottom:10px;">URL para invitados:</p>
             <div class="qr-url" id="qu">—</div>
             <div id="qrcode"></div>
             <div style="display:flex;gap:7px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
               <button class="btn bi" onclick="dlQR()">↓ Descargar QR</button>
               <button class="btn bo" onclick="cpURL()">⧉ Copiar URL</button>
               <button class="btn bg" onclick="openDisp()">▶ Abrir Pantalla</button>
-            </div>
-          </div>
-          <div class="fi"><label>Vista previa del display</label>
-            <div class="preview-wrap">
-              <iframe id="preview-iframe" src=""></iframe>
             </div>
           </div>
           <div style="display:flex;gap:8px;margin-top:18px;">
@@ -1081,7 +1271,10 @@ const db={
 
 let evs=[],curEv=null,curGs=[],mapTs=[],bgD=null,bgT=null,selC='#b8973a',selA='particles';
 let ctab=0,mShape='round',mScale=1,mPan={x:0,y:0},selT=null,mDrag=null,mSx=0,mSy=0;
-let mc,mctx,mW,mH,qrSize=176;
+let mc,mctx,mW,mH;
+let entryMode=null; // 'entry','exit','stage','bar','dance'
+let mapMarkers=[]; // {type, x, y, label}
+let qrSize=200;
 
 /* NAV */
 function nav(p,el){
@@ -1135,7 +1328,7 @@ function gt(n){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===n));
   ctab=n;
   if(n===3)initMap();
-  if(n===4){genQR();loadPreview();}
+  if(n===4)genQR();
 }
 
 /* OPEN/EDIT */
@@ -1170,6 +1363,7 @@ async function editEv(id){
   document.getElementById('ea').value=selA;
   document.querySelectorAll('.ao').forEach(o=>o.classList.toggle('on',o.dataset.a===selA));
   bgD=curEv.bg_url||null;bgT=curEv.bg_type||null;
+  qrSize=curEv.qr_size||200;
   document.getElementById('bg-prev').innerHTML=bgD?(bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`):'';
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
@@ -1184,7 +1378,7 @@ async function saveEv(){
   const name=document.getElementById('en').value.trim();
   if(!name){toast('Ingresa el nombre');gt(0);return;}
   toast('Guardando...');
-  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT};
+  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize};
   let eid;
   if(curEv){
     await db.patch('events',curEv.id,data);eid=curEv.id;
@@ -1221,6 +1415,22 @@ function sColor(c){selC=c;document.getElementById('ec').value=c;}
 function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
 
 /* MAP EDITOR */
+function setShape(el, s) {
+  document.querySelectorAll('.shape-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active'); mShape=s; drawMap();
+}
+
+function toggleEntryMode(type) {
+  if(entryMode===type){ entryMode=null; } else { entryMode=type; }
+  ['entry','exit','stage','bar','dance'].forEach(t=>{
+    const b=document.getElementById('btn-'+t);
+    if(b) b.classList.toggle('active', entryMode===t);
+  });
+}
+
+const MARKER_ICONS={entry:'🚪',exit:'↩',stage:'🎤',bar:'🍾',dance:'💃'};
+const MARKER_COLORS={entry:'#22c55e',exit:'#f59e0b',stage:'#8b5cf6',bar:'#ec4899',dance:'#3b82f6'};
+
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
@@ -1236,27 +1446,84 @@ function initMap(){
   document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&selT&&document.getElementById('modal').classList.contains('open')){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}});
 }
 
-function mdStart(e){const{mx,my}=mc2(e);const hit=mapTs.find(t=>hitT(t,mx,my));if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}else{selT=null;const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});document.getElementById('mtn').value=tn+1;}drawMap();}
+function mdStart(e){
+  const{mx,my}=mc2(e);
+  // Si hay modo de marcador activo, agregar marcador
+  if(entryMode){
+    const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
+    mapMarkers.push({type:entryMode,x:rx,y:ry,label:MARKER_ICONS[entryMode]});
+    drawMap(); return;
+  }
+  const hit=mapTs.find(t=>hitT(t,mx,my));
+  if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
+  else{
+    selT=null;
+    const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
+    const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
+    mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
+    document.getElementById('mtn').value=tn+1;
+  }
+  drawMap();
+}
+
 function mdMove(e){if(!mDrag)return;const{mx,my}=mc2(e);mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}
 function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
-function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);return t.shape==='rect'?mx>=x-r*1.5&&mx<=x+r*1.5&&my>=y-r*0.75&&my<=y+r*0.75:Math.hypot(mx-x,my-y)<=r;}
+function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);
+  if(t.shape==='rect'||t.shape==='square') return mx>=x-r*1.4&&mx<=x+r*1.4&&my>=y-r*.75&&my<=y+r*.75;
+  return Math.hypot(mx-x,my-y)<=r;}
 
 function drawMap(){
   if(!mctx)return;
   mctx.clearRect(0,0,mW,mH);
+  // Dot grid
   mctx.fillStyle='rgba(0,0,0,0.05)';
   for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
+  
+  // Draw markers first (behind tables)
+  mapMarkers.forEach(m=>{
+    const x=m.x*mScale+mPan.x, y=m.y*mScale+mPan.y;
+    const col=MARKER_COLORS[m.type]||'#888';
+    mctx.save();
+    mctx.fillStyle=col+'33';
+    mctx.beginPath(); mctx.arc(x,y,24*mScale,0,Math.PI*2); mctx.fill();
+    mctx.strokeStyle=col; mctx.lineWidth=1.5;
+    mctx.beginPath(); mctx.arc(x,y,24*mScale,0,Math.PI*2); mctx.stroke();
+    mctx.font=`${Math.max(12,16*mScale)}px sans-serif`;
+    mctx.textAlign='center'; mctx.textBaseline='middle';
+    mctx.fillStyle='rgba(0,0,0,0)';
+    mctx.fillText(m.label,x,y);
+    mctx.fillStyle=col;
+    // Draw emoji/text
+    mctx.font=`${Math.max(10,14*mScale)}px sans-serif`;
+    mctx.fillStyle='#333';
+    mctx.fillText(m.label,x,y);
+    mctx.restore();
+  });
+
+  // Draw tables
   mapTs.forEach(t=>{
     const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale),isSel=selT===t;
     mctx.save();
     if(isSel){mctx.shadowBlur=14;mctx.shadowColor='rgba(184,151,58,0.5)';}
-    if(t.shape==='rect'){
+    const shape=t.shape||mShape;
+    if(shape==='rect'){
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';
       mctx.fillRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.12)';
       mctx.lineWidth=isSel?1.5:0.8;
       mctx.strokeRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
-    }else{
+    } else if(shape==='square'){
+      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';
+      mctx.fillRect(x-r,y-r,r*2,r*2);
+      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.12)';
+      mctx.lineWidth=isSel?1.5:0.8;
+      mctx.strokeRect(x-r,y-r,r*2,r*2);
+    } else if(shape==='oval'){
+      mctx.beginPath();mctx.ellipse(x,y,r*1.5,r*0.85,0,0,Math.PI*2);
+      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
+      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
+      mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
+    } else { // round default
       mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
@@ -1277,14 +1544,69 @@ function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];drawMap();}}
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
 function dURL(id){return`${location.origin}${location.pathname.replace('admin.html','display.html')}?event=${id}`;}
-function genQR(){const id=curEv?curEv.id:'preview';const url=gURL(id);document.getElementById('qu').textContent=url;document.getElementById('qrcode').innerHTML='';try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}loadPreview();}
-function updateQRSize(val){qrSize=parseInt(val);document.getElementById('qr-size-val').textContent=val;genQR();}
+
+function updateQRSize(val){
+  qrSize=parseInt(val);
+  document.getElementById('qr-size-val').textContent=val+'px';
+  renderDispPreview();
+  // Re-gen real QR with new size
+  const id=curEv?curEv.id:'preview';
+  const url=gURL(id);
+  document.getElementById('qrcode').innerHTML='';
+  try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}
+}
+
+function renderDispPreview(){
+  const container=document.getElementById('disp-preview-container');
+  if(!container)return;
+  const orient=document.getElementById('eo').value||'vertical';
+  const name=document.getElementById('en').value||'Nombre del Evento';
+  const type=document.getElementById('et').value||'Evento';
+  const welcome=document.getElementById('ew').value||'Bienvenidos';
+  const isH=orient==='horizontal';
+
+  const previewQRSize=isH?60:50;
+  container.innerHTML=`
+    <div class="disp-preview-wrap ${isH?'horiz':'vert'}">
+      <div class="disp-prev-bg" id="dp-bg">
+        ${bgD?(bgT==='video'?`<video src="${bgD}" autoplay muted loop style="width:100%;height:100%;object-fit:cover;opacity:.4;"></video>`:`<img src="${bgD}" style="width:100%;height:100%;object-fit:cover;opacity:.4;">`):
+        `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);"></div>`}
+      </div>
+      <div class="disp-prev-content ${isH?'horiz':''}">
+        <div class="disp-prev-top">
+          <div class="disp-prev-type">${type}</div>
+          <div class="disp-prev-name" style="color:${selC||'#b8973a'}">${name}</div>
+        </div>
+        <div class="disp-prev-qr-wrap">
+          <div class="disp-prev-qr" style="width:${previewQRSize}px;height:${previewQRSize}px;background:#fff;display:flex;align-items:center;justify-content:center;">
+            <div style="font-size:${previewQRSize*0.55}px;opacity:0.3;">▣</div>
+          </div>
+          <div class="disp-prev-scan">SCAN HERE</div>
+        </div>
+        <div class="disp-prev-bot">
+          <div class="disp-prev-welcome">${welcome}</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.65rem;color:var(--gray);text-align:center;margin-top:6px;">Vista previa · ${isH?'Horizontal':'Vertical'} · QR: ${qrSize}px</p>
+  `;
+}
+
+function genQR(){
+  renderDispPreview();
+  const id=curEv?curEv.id:'preview';
+  const url=gURL(id);
+  document.getElementById('qu').textContent=url;
+  document.getElementById('qrcode').innerHTML='';
+  try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}
+  document.getElementById('qr-size-val').textContent=qrSize+'px';
+  document.getElementById('qr-size-range').value=qrSize;
+}
 function dlQR(){const c=document.querySelector('#qrcode canvas');if(!c){toast('Genera primero');return;}const a=document.createElement('a');a.download='qr.png';a.href=c.toDataURL();a.click();}
 function cpURL(){navigator.clipboard.writeText(document.getElementById('qu').textContent);toast('URL copiada');}
 function cpURLById(id){navigator.clipboard.writeText(gURL(id));toast('URL copiada');}
 function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero');}
 function openDispById(id){window.open(dURL(id),'_blank');}
-function loadPreview(){if(curEv){const pf=document.getElementById('preview-iframe');pf.src=dURL(curEv.id);}}
 
 /* UI */
 function closeModal(){document.getElementById('modal').classList.remove('open');}
