@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MesaQR — Admin</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@200;300;400;500&family=DM+Mono&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --ink: #0a0a0a;
+      --ink2: #1c1c1c;
+      --ink3: #2e2e2e;
+      --gray: #888;
+      --gray2: #bbb;
+      --line: #e8e8e8;
+      --line2: #f0f0f0;
+      --paper: #fafaf8;
+      --white: #fff;
+      --gold: #b8973a;
+      --gold2: #d4b86a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--line);
+    }
+
+    /* SIDEBAR */
+    .sb {
+      width: 210px;
+      background: var(--ink);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 50;
+    }
+
+    .sb-logo {
+      padding: 24px 22px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .wm {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    .wm span {
+      color: var(--gold2);
+    }
+
+    .wm-sub {
+      font-size: 0.55rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.25);
+      margin-top: 2px;
+    }
+
+    .sb-nav {
+      flex: 1;
+      padding: 14px 0;
+    }
+
+    .sb-s {
+      font-size: 0.52rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.22);
+      padding: 12px 22px 5px;
+    }
+
+    .sb-i {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 22px;
+      font-size: 0.76rem;
+      color: rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+
+    .sb-i:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sb-i.on {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+      border-left-color: var(--gold2);
+    }
+
+    .sb-i .d {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.4;
+    }
+
+    .sb-foot {
+      padding: 18px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.28);
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: 210px;
+      flex: 1;
+    }
+
+    .topbar {
+      height: 52px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .topbar-t {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      font-weight: 300;
+    }
+
+    .topbar-t em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .page {
+      padding: 28px;
+      max-width: 1160px;
+    }
+
+    /* STATS */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 18px 20px;
+    }
+
+    .stat-n {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.8rem;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .stat-l {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-top: 3px;
+    }
+
+    .stat-bar {
+      height: 1px;
+      background: var(--line2);
+      margin-top: 12px;
+    }
+
+    .stat-bar-f {
+      height: 100%;
+      background: var(--ink);
+    }
+
+    /* GRID */
+    .sh {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .st {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 300;
+    }
+
+    .eg {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 14px;
+    }
+
+    .ec {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ec::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--ink);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.25s;
+    }
+
+    .ec:hover {
+      border-color: var(--ink2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    .ec:hover::after {
+      transform: scaleX(1);
+    }
+
+    .ec-tag {
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gray);
+      border: 1px solid var(--line);
+      padding: 2px 7px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .ec-n {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      margin-bottom: 3px;
+    }
+
+    .ec-m {
+      font-size: 0.7rem;
+      color: var(--gray);
+      margin-bottom: 10px;
+    }
+
+    .ec-st {
+      display: flex;
+      gap: 12px;
+      font-size: 0.68rem;
+      color: var(--gray2);
+      border-top: 1px solid var(--line2);
+      padding-top: 10px;
+    }
+
+    .ec-a {
+      display: flex;
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: 7px 16px;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .bi {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .bi:hover {
+      background: var(--ink2);
+    }
+
+    .bo {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    .bo:hover {
+      border-color: var(--ink);
+    }
+
+    .bg {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    .bg:hover {
+      background: var(--gold2);
+    }
+
+    .bd {
+      background: transparent;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+    }
+
+    .bd:hover {
+      background: #fef2f2;
+    }
+
+    .bs {
+      padding: 5px 11px;
+      font-size: 0.63rem;
+    }
+
+    .bl {
+      padding: 11px 26px;
+      font-size: 0.75rem;
+    }
+
+    /* MODAL */
+    .ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .ov.open {
+      display: flex;
+    }
+
+    .mo {
+      background: #fff;
+      width: 100%;
+      max-width: 780px;
+      max-height: 94vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+    }
+
+    .mo-h {
+      padding: 20px 26px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .mo-t {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+    }
+
+    .mo-t em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .mo-x {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--gray);
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mo-x:hover {
+      color: var(--ink);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+      background: var(--paper);
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 10px 18px;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: var(--gray);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .tab.on {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+
+    .mo-b {
+      flex: 1;
+      overflow-y: auto;
+      padding: 22px 26px;
+    }
+
+    /* FORMS */
+    .fi {
+      margin-bottom: 16px;
+    }
+
+    .fi label {
+      display: block;
+      font-size: 0.58rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gray);
+      margin-bottom: 5px;
+    }
+
+    .fi input,
+    .fi select,
+    .fi textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .fi input:focus,
+    .fi select:focus,
+    .fi textarea:focus {
+      border-color: var(--ink);
+    }
+
+    .fi textarea {
+      resize: vertical;
+      min-height: 72px;
+    }
+
+    .fi .hint {
+      font-size: 0.6rem;
+      color: var(--gray);
+      margin-top: 3px;
+    }
+
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* UPLOAD */
+    .uz {
+      border: 1px dashed var(--line);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.2s;
+      background: var(--paper);
+    }
+
+    .uz:hover {
+      border-color: var(--ink);
+    }
+
+    .uz input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .uz p {
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+
+    .uz strong {
+      color: var(--ink);
+    }
+
+    /* GUEST TABLE */
+    .gr {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 7px;
+    }
+
+    .gr input {
+      flex: 1;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      outline: none;
+    }
+
+    .gr input:focus {
+      border-color: var(--ink);
+    }
+
+    .gr input[type=number] {
+      width: 72px;
+      flex: none;
+    }
+
+    .gt {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .gt th {
+      font-size: 0.56rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+      padding: 7px 5px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-weight: 400;
+    }
+
+    .gt td {
+      padding: 6px 5px;
+      border-bottom: 1px solid var(--line2);
+    }
+
+    .gt tr:hover td {
+      background: var(--paper);
+    }
+
+    .tb {
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.6rem;
+      padding: 2px 7px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* MAP */
+    .map-wrap {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      overflow: hidden;
+    }
+
+    #map-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: crosshair;
+    }
+
+    .map-tb {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      padding: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    .map-tb select,
+    .map-tb input {
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      outline: none;
+      background: #fff;
+    }
+
+    /* QR */
+    .qr-box {
+      text-align: center;
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .qr-box #qrcode {
+      display: inline-block;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .qr-url {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--gray);
+      word-break: break-all;
+      background: var(--paper);
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      margin: 10px 0;
+      text-align: left;
+    }
+
+    /* SWATCHES */
+    .sw-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .sw {
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.12s;
+    }
+
+    .sw:hover {
+      transform: scale(1.12);
+    }
+
+    .sw.on {
+      border-color: var(--ink);
+    }
+
+    .sw-c {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* ANIM GRID */
+    .ag {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+
+    .ao {
+      border: 1px solid var(--line);
+      padding: 9px 7px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.68rem;
+      transition: all 0.15s;
+      background: var(--paper);
+    }
+
+    .ao:hover {
+      border-color: var(--ink);
+    }
+
+    .ao.on {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .ao-i {
+      font-size: 1.1rem;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: #fff;
+      padding: 9px 18px;
+      font-size: 0.75rem;
+      z-index: 999;
+      transform: translateY(60px);
+      opacity: 0;
+      transition: all 0.22s;
+      letter-spacing: 0.02em;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--gray);
+      font-size: 0.82rem;
+    }
+
+    .empty-i {
+      font-size: 1.8rem;
+      opacity: 0.18;
+      margin-bottom: 10px;
+    }
+
+    /* PREVIEW DISPLAY */
+    .preview-wrap {
+      width: 100%;
+      height: 300px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      margin: 16px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* QR SIZE CONTROL */
+    .qr-size-ctrl {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .qr-size-ctrl label {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    .qr-size-ctrl input[type="range"] {
+      flex: 1;
+      max-width: 200px;
+    }
+
+    .qr-size-display {
+      font-size: 0.75rem;
+      color: var(--gray);
+      min-width: 60px;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="wm">Mesa<span>QR</span></div>
+      <div class="wm-sub">Admin Panel</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-s">Principal</div>
+      <div class="sb-i on" onclick="nav('dashboard',this)"><span class="d"></span>Dashboard</div>
+      <div class="sb-i" onclick="nav('events',this)"><span class="d"></span>Eventos</div>
+      <div class="sb-i" onclick="openNew()"><span class="d"></span>+ Nuevo Evento</div>
+      <div class="sb-s">Herramientas</div>
+      <div class="sb-i" onclick="nav('qrs',this)"><span class="d"></span>Códigos QR</div>
+      <div class="sb-i" onclick="nav('guests',this)"><span class="d"></span>Invitados</div>
+    </nav>
+    <div class="sb-foot">invita4you@gmail.com</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <span class="topbar-t" id="ptitle">Dashboard</span>
+      <button class="btn bi bs" onclick="openNew()">+ Nuevo Evento</button>
+    </div>
+    <div class="page">
+      <div id="p-dashboard">
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-n" id="s0">—</div>
+            <div class="stat-l">Eventos</div>
+            <div class="stat-bar">
+              <div class="stat-bar-f" style="width:80%"></div>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="stat-n" id="s1">—</div>
+            <div class="stat-l">Invitados</div>
+            <div class="stat-bar">
+              <div class="stat-bar-f" style="width:60%"></div>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="stat-n" id="s2">—</div>
+            <div class="stat-l">Mesas</div>
+            <div class="stat-bar">
+              <div class="stat-bar-f" style="width:40%"></div>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="stat-n" id="s3">—</div>
+            <div class="stat-l">QRs</div>
+            <div class="stat-bar">
+              <div class="stat-bar-f" style="width:100%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="sh"><span class="st">Eventos recientes</span></div>
+        <div id="recent"></div>
+      </div>
+      <div id="p-events" style="display:none">
+        <div class="sh">
+          <span class="st">Todos los Eventos</span><button class="btn bi bs" onclick="openNew()">+ Nuevo</button>
+        </div>
+        <div id="ev-grid" class="eg"></div>
+      </div>
+      <div id="p-qrs" style="display:none">
+        <div class="sh"><span class="st">Códigos QR</span></div>
+        <div id="qr-grid" class="eg"></div>
+      </div>
+      <div id="p-guests" style="display:none">
+        <div class="sh"><span class="st">Invitados</span></div>
+        <div id="g-all"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL -->
+  <div class="ov" id="modal">
+    <div class="mo">
+      <div class="mo-h">
+        <div class="mo-t" id="mo-title">Nuevo <em>Evento</em></div>
+        <button class="mo-x" onclick="closeModal()">✕</button>
+      </div>
+      <div class="tabs" id="tabs-row">
+        <div class="tab on" onclick="gt(0)">① Info</div>
+        <div class="tab" onclick="gt(1)">② Portada</div>
+        <div class="tab" onclick="gt(2)">③ Invitados</div>
+        <div class="tab" onclick="gt(3)">④ Mapa Mesas</div>
+        <div class="tab" onclick="gt(4)">⑤ QR & Guardar</div>
+      </div>
+      <div class="mo-b">
+
+        <!-- T0 INFO -->
+        <div id="t0">
+          <div class="g2">
+            <div class="fi"><label>Nombre del evento</label><input id="en" placeholder="Boda de Ana & Carlos"></div>
+            <div class="fi">
+              <label>Tipo</label><select id="et"><option>Boda</option><option>XV Años</option><option>Sweet 16</option><option>Quinceañera</option><option>Cumpleaños</option><option>Graduación</option><option>Otro</option></select>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="fi"><label>Fecha</label><input type="date" id="ed"></div>
+            <div class="fi"><label>Venue</label><input id="ev" placeholder="Salón Las Palmas"></div>
+          </div>
+          <div class="fi"><label>Festejado/a</label><input id="eh" placeholder="Ana González"></div>
+          <div class="fi"><label>Mensaje de bienvenida (aparece al escanear el QR)</label><input id="ew" placeholder="¡Bienvenido a la celebración más especial!">
+          </div>
+          <div class="g2">
+            <div class="fi">
+              <label>Orientación pantalla</label><select id="eo"><option value="vertical">Vertical (portrait)</option><option value="horizontal">Horizontal (landscape)</option></select>
+            </div>
+            <div class="fi"><label>Total de mesas</label><input type="number" id="etn" value="20" min="1" max="600">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn bi" onclick="gt(1)">Siguiente →</button>
+          </div>
+        </div>
+
+        <!-- T1 PORTADA -->
+        <div id="t1" style="display:none">
+          <div class="fi">
+            <label>Fondo (imagen o video)</label>
+            <div class="uz"><input type="file" accept="image/*,video/mp4,video/webm" onchange="handleBg(this)">
+              <p>Arrastra o <strong>haz clic</strong><br><span style="font-size:0.6rem">JPG · PNG · MP4 · WebM</span>
+              </p>
+              <div id="bg-prev" style="margin-top:8px;"></div>
+            </div>
+          </div>
+          <div class="fi"><label>Color de acento</label>
+            <div class="sw-row" id="sw-row">
+              <div class="sw on" style="background:#b8973a" data-c="#b8973a" onclick="pColor(this)"></div>
+              <div class="sw" style="background:#1c1c1c" data-c="#1c1c1c" onclick="pColor(this)"></div>
+              <div class="sw" style="background:#c0392b" data-c="#c0392b" onclick="pColor(this)"></div>
+              <div class="sw" style="background:#2c7be5" data-c="#2c7be5" onclick="pColor(this)"></div>
+              <div class="sw" style="background:#e8829a" data-c="#e8829a" onclick="pColor(this)"></div>
+              <div class="sw" style="background:#7c3aed" data-c="#7c3aed" onclick="pColor(this)"></div>
+              <input type="color" class="sw-c" value="#b8973a" oninput="sColor(this.value)">
+            </div>
+            <input type="hidden" id="ec" value="#b8973a">
+          </div>
+          <div class="fi"><label>Animación de portada</label>
+            <div class="ag" id="ag">
+              <div class="ao on" data-a="particles" onclick="pAnim(this)"><span class="ao-i">✦</span>Partículas</div>
+              <div class="ao" data-a="petals" onclick="pAnim(this)"><span class="ao-i">◌</span>Pétalos</div>
+              <div class="ao" data-a="fireworks" onclick="pAnim(this)"><span class="ao-i">◈</span>Fuegos</div>
+              <div class="ao" data-a="snow" onclick="pAnim(this)"><span class="ao-i">❄</span>Nieve</div>
+              <div class="ao" data-a="bokeh" onclick="pAnim(this)"><span class="ao-i">◎</span>Bokeh</div>
+              <div class="ao" data-a="none" onclick="pAnim(this)"><span class="ao-i">—</span>Ninguna</div>
+            </div>
+            <input type="hidden" id="ea" value="particles">
+          </div>
+          <div class="fi"><label>Animación al revelar mesa</label>
+            <select id="eta"><option value="glow">Brillo elegante</option><option value="pulse">Pulso suave</option><option value="reveal">Revelación</option><option value="none">Sin animación</option></select>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn bo" onclick="gt(0)">← Anterior</button>
+            <button class="btn bi" onclick="gt(2)">Siguiente →</button>
+          </div>
+        </div>
+
+        <!-- T2 INVITADOS -->
+        <div id="t2" style="display:none">
+          <div class="gr">
+            <input id="gn" placeholder="Nombre del invitado" onkeydown="if(event.key==='Enter')addG()">
+            <input id="gnt" type="number" placeholder="Mesa" min="1" onkeydown="if(event.key==='Enter')addG()">
+            <button class="btn bi bs" onclick="addG()">+ Agregar</button>
+          </div>
+          <div style="display:flex;gap:7px;margin-bottom:12px;align-items:center;">
+            <div class="uz" style="flex:1;padding:8px 12px;text-align:left;display:flex;align-items:center;gap:7px;">
+              <input type="file" accept=".csv,.txt" onchange="impCSV(this)">
+              <span style="font-size:0.72rem">📄 CSV <span style="color:var(--gray)">(Nombre,Mesa)</span></span>
+            </div>
+            <button class="btn bo bs" onclick="dlTpl()">↓ Plantilla</button>
+            <button class="btn bo bs" onclick="clearG()">✕ Limpiar</button>
+          </div>
+          <div style="max-height:280px;overflow-y:auto;border:1px solid var(--line);">
+            <table class="gt">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nombre</th>
+                  <th>Mesa</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="gtb"></tbody>
+            </table>
+          </div>
+          <div id="gc" style="font-size:0.65rem;color:var(--gray);margin-top:6px;">0 invitados</div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn bo" onclick="gt(1)">← Anterior</button>
+            <button class="btn bi" onclick="gt(3)">Siguiente →</button>
+          </div>
+        </div>
+
+        <!-- T3 MAPA -->
+        <div id="t3" style="display:none">
+          <div class="map-tb">
+            <select id="ms" onchange="mShape=this.value;drawMap()" style="font-size:0.7rem;">
+          <option value="round">⭕ Redonda</option>
+          <option value="rect">▬ Rectangular</option>
+        </select>
+            <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:66px;">
+            <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
+            <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
+            <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
+            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
+          </div>
+          <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn bo" onclick="gt(2)">← Anterior</button>
+            <button class="btn bi" onclick="gt(4)">Siguiente →</button>
+          </div>
+        </div>
+
+        <!-- T4 QR -->
+        <div id="t4" style="display:none">
+          <div class="fi"><label>Tamaño del QR</label>
+            <div class="qr-size-ctrl">
+              <input type="range" id="qr-size" min="100" max="400" value="176" oninput="updateQRSize(this.value)" step="20">
+              <span class="qr-size-display"><span id="qr-size-val">176</span>px</span>
+            </div>
+          </div>
+          <div class="qr-box">
+            <p style="font-size:0.68rem;color:var(--gray);margin-bottom:10px;">URL para invitados:</p>
+            <div class="qr-url" id="qu">—</div>
+            <div id="qrcode"></div>
+            <div style="display:flex;gap:7px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+              <button class="btn bi" onclick="dlQR()">↓ Descargar QR</button>
+              <button class="btn bo" onclick="cpURL()">⧉ Copiar URL</button>
+              <button class="btn bg" onclick="openDisp()">▶ Abrir Pantalla</button>
+            </div>
+          </div>
+          <div class="fi"><label>Vista previa del display</label>
+            <div class="preview-wrap">
+              <iframe id="preview-iframe" src=""></iframe>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:18px;">
+            <button class="btn bo" onclick="gt(3)">← Anterior</button>
+            <button class="btn bi bl" onclick="saveEv()">✦ Guardar Evento</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SB='https://nhasvajymzawqykesaeg.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
+const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
+const db={
+  async get(t,q=''){return(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();},
+  async post(t,d){return(await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
+  async patch(t,id,d){return(await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
+  async del(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});},
+  async dw(t,c,v){await fetch(`${SB}/rest/v1/${t}?${c}=eq.${v}`,{method:'DELETE',headers:H});}
+};
+
+let evs=[],curEv=null,curGs=[],mapTs=[],bgD=null,bgT=null,selC='#b8973a',selA='particles';
+let ctab=0,mShape='round',mScale=1,mPan={x:0,y:0},selT=null,mDrag=null,mSx=0,mSy=0;
+let mc,mctx,mW,mH,qrSize=176;
+
+/* NAV */
+function nav(p,el){
+  document.querySelectorAll('.sb-i').forEach(i=>i.classList.remove('on'));
+  if(el)el.classList.add('on');
+  ['dashboard','events','qrs','guests'].forEach(x=>{const e=document.getElementById('p-'+x);if(e)e.style.display=x===p?'block':'none';});
+  const tts={dashboard:'Dashboard',events:'Eventos',qrs:'Códigos QR',guests:'Invitados'};
+  document.getElementById('ptitle').textContent=tts[p]||p;
+  if(p==='dashboard')loadDash();
+  if(p==='events')loadEvs();
+  if(p==='qrs')loadQRs();
+  if(p==='guests')loadGs();
+}
+
+/* DASHBOARD */
+async function loadDash(){
+  evs=await db.get('events');
+  const gs=await db.get('guests');
+  const tl=await db.get('table_layout');
+  document.getElementById('s0').textContent=evs.length;
+  document.getElementById('s1').textContent=gs.length;
+  document.getElementById('s2').textContent=tl.length;
+  document.getElementById('s3').textContent=evs.length;
+  const r=document.getElementById('recent');
+  r.innerHTML=evs.length?'<div class="eg">'+evs.slice(0,6).map(eCard).join('')+'</div>':'<div class="empty"><div class="empty-i">◈</div>Sin eventos aún</div>';
+}
+
+function eCard(e){return`<div class="ec"><span class="ec-tag">${e.type||'Evento'}</span><div class="ec-n">${e.name}</div><div class="ec-m">${e.date||''} · ${e.venue||''}</div><div class="ec-st"><span>${e.table_count||0} mesas</span><span>${e.host||''}</span></div><div class="ec-a"><button class="btn bo bs" onclick="editEv('${e.id}')">Editar</button><button class="btn bi bs" onclick="openDispById('${e.id}')">▶ Pantalla</button><button class="btn bd bs" onclick="delEv('${e.id}')">🗑</button></div></div>`;}
+
+async function loadEvs(){evs=await db.get('events');document.getElementById('ev-grid').innerHTML=evs.length?evs.map(eCard).join(''):'<div class="empty"><div class="empty-i">◈</div>Sin eventos</div>';}
+
+async function loadQRs(){
+  evs=await db.get('events');
+  const g=document.getElementById('qr-grid');
+  if(!evs.length){g.innerHTML='<div class="empty">Sin eventos</div>';return;}
+  g.innerHTML=evs.map(e=>`<div class="ec"><div class="ec-tag">${e.type||'Evento'}</div><div class="ec-n">${e.name}</div><div id="mqr-${e.id}" style="margin:8px 0;display:inline-block;background:#fff;padding:5px;border:1px solid var(--line);"></div><br><div class="ec-a"><button class="btn bi bs" onclick="openDispById('${e.id}')">▶ Pantalla</button><button class="btn bo bs" onclick="cpURLById('${e.id}')">⧉ URL</button></div></div>`).join('');
+  evs.forEach(e=>{try{new QRCode(document.getElementById('mqr-'+e.id),{text:gURL(e.id),width:80,height:80,colorDark:'#0a0a0a',colorLight:'#ffffff'});}catch(x){}});
+}
+
+async function loadGs(){
+  const gs=await db.get('guests');evs=await db.get('events');
+  const el=document.getElementById('g-all');
+  if(!evs.length){el.innerHTML='<div class="empty">Sin datos</div>';return;}
+  const by={};gs.forEach(g=>{if(!by[g.event_id])by[g.event_id]=[];by[g.event_id].push(g);});
+  el.innerHTML=evs.map(e=>`<div style="background:#fff;border:1px solid var(--line);padding:16px;margin-bottom:12px;"><div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;margin-bottom:10px;">${e.name} <span style="font-size:0.65rem;font-family:'DM Sans',sans-serif;color:var(--gray);">${(by[e.id]||[]).length} invitados</span></div><table class="gt"><thead><tr><th>#</th><th>Nombre</th><th>Mesa</th></tr></thead><tbody>${(by[e.id]||[]).map((g,i)=>`<tr><td style="color:var(--gray)">${i+1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td></tr>`).join('')}</tbody></table></div>`).join('');
+}
+
+/* TABS */
+function gt(n){
+  ['t0','t1','t2','t3','t4'].forEach((t,i)=>document.getElementById(t).style.display=i===n?'block':'none');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  ctab=n;
+  if(n===3)initMap();
+  if(n===4){genQR();loadPreview();}
+}
+
+/* OPEN/EDIT */
+function openNew(){
+  curEv=null;curGs=[];mapTs=[];bgD=null;bgT=null;
+  ['en','ed','ev','eh','ew'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('etn').value='20';
+  document.getElementById('eo').value='vertical';
+  document.getElementById('bg-prev').innerHTML='';
+  document.getElementById('mo-title').innerHTML='Nuevo <em>Evento</em>';
+  selC='#b8973a';selA='particles';
+  document.querySelectorAll('.ao').forEach(o=>o.classList.toggle('on',o.dataset.a==='particles'));
+  rGuests();gt(0);
+  document.getElementById('modal').classList.add('open');
+}
+
+async function editEv(id){
+  const r=await db.get('events',`id=eq.${id}`);
+  if(!r||!r[0])return;
+  curEv=r[0];
+  document.getElementById('en').value=curEv.name||'';
+  document.getElementById('et').value=curEv.type||'Boda';
+  document.getElementById('ed').value=curEv.date||'';
+  document.getElementById('ev').value=curEv.venue||'';
+  document.getElementById('eh').value=curEv.host||'';
+  document.getElementById('ew').value=curEv.welcome_msg||'';
+  document.getElementById('etn').value=curEv.table_count||20;
+  document.getElementById('eo').value=curEv.orientation||'vertical';
+  document.getElementById('eta').value=curEv.table_anim||'glow';
+  selC=curEv.color||'#b8973a';selA=curEv.animation||'particles';
+  document.getElementById('ec').value=selC;
+  document.getElementById('ea').value=selA;
+  document.querySelectorAll('.ao').forEach(o=>o.classList.toggle('on',o.dataset.a===selA));
+  bgD=curEv.bg_url||null;bgT=curEv.bg_type||null;
+  document.getElementById('bg-prev').innerHTML=bgD?(bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`):'';
+  curGs=await db.get('guests',`event_id=eq.${id}`);
+  curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
+  mapTs=await db.get('table_layout',`event_id=eq.${id}`);
+  rGuests();
+  document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
+  gt(0);document.getElementById('modal').classList.add('open');
+}
+
+/* SAVE */
+async function saveEv(){
+  const name=document.getElementById('en').value.trim();
+  if(!name){toast('Ingresa el nombre');gt(0);return;}
+  toast('Guardando...');
+  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT};
+  let eid;
+  if(curEv){
+    await db.patch('events',curEv.id,data);eid=curEv.id;
+    await db.dw('guests','event_id',eid);
+    await db.dw('table_layout','event_id',eid);
+  } else {
+    const res=await db.post('events',data);eid=res[0]?.id;
+  }
+  if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
+  if(mapTs.length&&eid) await db.post('table_layout',mapTs.map(t=>({event_id:eid,table_number:t.table_number,x:t.x,y:t.y,shape:t.shape||mShape,label:t.label||String(t.table_number)})));
+  closeModal();toast('✦ Evento guardado');loadDash();
+}
+
+async function delEv(id){
+  if(!confirm('¿Eliminar evento?'))return;
+  await db.dw('guests','event_id',id);
+  await db.dw('table_layout','event_id',id);
+  await db.del('events',id);
+  toast('Eliminado');loadDash();
+}
+
+/* GUESTS */
+function addG(){const n=document.getElementById('gn').value.trim();const t=parseInt(document.getElementById('gnt').value);if(!n||isNaN(t))return;curGs.push({name:n,table_number:t});document.getElementById('gn').value='';document.getElementById('gnt').value='';rGuests();document.getElementById('gn').focus();}
+function removeG(i){curGs.splice(i,1);rGuests();}
+function clearG(){if(confirm('¿Limpiar?')){curGs=[];rGuests();}}
+function rGuests(){const tb=document.getElementById('gtb');tb.innerHTML=curGs.length?curGs.map((g,i)=>`<tr><td style="color:var(--gray)">${i+1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td><button onclick="removeG(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.72rem;">✕</button></td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:14px;font-size:0.72rem;">Sin invitados</td></tr>';document.getElementById('gc').textContent=curGs.length+' invitados';}
+function impCSV(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{let a=0;e.target.result.split('\n').filter(l=>l.trim()).forEach(l=>{const p=l.split(',');if(p.length>=2){const n=p[0].trim(),t=parseInt(p[1]);if(n&&!isNaN(t)){curGs.push({name:n,table_number:t});a++;}}});rGuests();toast(`${a} invitados importados`);};r.readAsText(f);}
+function dlTpl(){const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('Nombre,Mesa\nJuan Pérez,5\nMaría García,3');a.download='plantilla.csv';a.click();}
+
+/* BG */
+function handleBg(inp){const f=inp.files[0];if(!f)return;bgT=f.type.includes('video')?'video':'image';const r=new FileReader();r.onload=e=>{bgD=e.target.result;document.getElementById('bg-prev').innerHTML=bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`;};r.readAsDataURL(f);}
+function pColor(el){document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));el.classList.add('on');sColor(el.dataset.c);}
+function sColor(c){selC=c;document.getElementById('ec').value=c;}
+function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
+
+/* MAP EDITOR */
+function initMap(){
+  const w=document.getElementById('mw');
+  mc=document.getElementById('map-canvas');
+  mW=w.clientWidth;mH=w.clientHeight;
+  mc.width=mW;mc.height=mH;
+  mctx=mc.getContext('2d');
+  if(!mapTs.length)autoL();else drawMap();
+  mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=()=>mDrag=null;
+  mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.25,Math.min(4,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
+  mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;const hit=mapTs.find(t=>hitT(t,mx,my));if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}drawMap();};
+  mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;if(mDrag){mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}};
+  mc.ontouchend=()=>mDrag=null;
+  document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&selT&&document.getElementById('modal').classList.contains('open')){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}});
+}
+
+function mdStart(e){const{mx,my}=mc2(e);const hit=mapTs.find(t=>hitT(t,mx,my));if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}else{selT=null;const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});document.getElementById('mtn').value=tn+1;}drawMap();}
+function mdMove(e){if(!mDrag)return;const{mx,my}=mc2(e);mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}
+function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
+function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);return t.shape==='rect'?mx>=x-r*1.5&&mx<=x+r*1.5&&my>=y-r*0.75&&my<=y+r*0.75:Math.hypot(mx-x,my-y)<=r;}
+
+function drawMap(){
+  if(!mctx)return;
+  mctx.clearRect(0,0,mW,mH);
+  mctx.fillStyle='rgba(0,0,0,0.05)';
+  for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
+  mapTs.forEach(t=>{
+    const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale),isSel=selT===t;
+    mctx.save();
+    if(isSel){mctx.shadowBlur=14;mctx.shadowColor='rgba(184,151,58,0.5)';}
+    if(t.shape==='rect'){
+      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';
+      mctx.fillRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
+      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.12)';
+      mctx.lineWidth=isSel?1.5:0.8;
+      mctx.strokeRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
+    }else{
+      mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
+      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
+      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
+      mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
+    }
+    mctx.fillStyle='#fff';
+    mctx.font=`${Math.max(8,10*mScale)}px 'DM Mono',monospace`;
+    mctx.textAlign='center';mctx.textBaseline='middle';
+    mctx.fillText(t.label||t.table_number,x,y);
+    mctx.restore();
+  });
+}
+
+function autoL(){const n=parseInt(document.getElementById('etn').value)||20;mapTs=[];const cols=Math.ceil(Math.sqrt(n*1.3)),rows=Math.ceil(n/cols),cw=mW/cols,ch=mH/rows;for(let i=0;i<n;i++){const c=i%cols,ro=Math.floor(i/cols);mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});}drawMap();}
+function centerM(){mPan={x:0,y:0};mScale=1;drawMap();}
+function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];drawMap();}}
+
+/* QR */
+function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
+function dURL(id){return`${location.origin}${location.pathname.replace('admin.html','display.html')}?event=${id}`;}
+function genQR(){const id=curEv?curEv.id:'preview';const url=gURL(id);document.getElementById('qu').textContent=url;document.getElementById('qrcode').innerHTML='';try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}loadPreview();}
+function updateQRSize(val){qrSize=parseInt(val);document.getElementById('qr-size-val').textContent=val;genQR();}
+function dlQR(){const c=document.querySelector('#qrcode canvas');if(!c){toast('Genera primero');return;}const a=document.createElement('a');a.download='qr.png';a.href=c.toDataURL();a.click();}
+function cpURL(){navigator.clipboard.writeText(document.getElementById('qu').textContent);toast('URL copiada');}
+function cpURLById(id){navigator.clipboard.writeText(gURL(id));toast('URL copiada');}
+function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero');}
+function openDispById(id){window.open(dURL(id),'_blank');}
+function loadPreview(){if(curEv){const pf=document.getElementById('preview-iframe');pf.src=dURL(curEv.id);}}
+
+/* UI */
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+loadDash();
+  </script>
+</body>
+
+</html>
