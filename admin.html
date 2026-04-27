@@ -1449,27 +1449,42 @@ function initMap(){
   mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
   if(!mapTs.length)autoL();else drawMap();
-  mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=()=>mDrag=null;
+  mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.25,Math.min(4,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
-  mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;const hit=mapTs.find(t=>hitT(t,mx,my));if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}drawMap();};
-  mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;if(mDrag){mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}};
-  mc.ontouchend=()=>mDrag=null;
+  mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
+    mDownX=mx;mDownY=my;mDownMoved=false;
+    const hm=hitMarker(mx,my);
+    if(hm!==-1){mMarkerDrag=mapMarkers[hm];selMarker=hm;mMarkerSx=mx-mapMarkers[hm].x*mScale;mMarkerSy=my-mapMarkers[hm].y*mScale;drawMap();return;}
+    const hit=mapTs.find(t=>hitT(t,mx,my));
+    if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
+    drawMap();};
+  mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
+    if(Math.hypot(mx-mDownX,my-mDownY)>5)mDownMoved=true;
+    if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
+    if(mDrag){mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}};
+  mc.ontouchend=e=>{
+    if(entryMode&&!mDownMoved&&mMarkerDrag===null){
+      const r=mc.getBoundingClientRect();
+      const t=e.changedTouches[0];
+      const mx=t.clientX-r.left,my=t.clientY-r.top;
+      const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
+      mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
+      selMarker=mapMarkers.length-1;drawMap();
+    }
+    mDrag=null;mMarkerDrag=null;};
   document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&document.getElementById('modal').classList.contains('open')){
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
 }
 
+let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
+
 function mdStart(e){
   const{mx,my}=mc2(e);
-  // Si hay modo de marcador activo, agregar marcador
-  if(entryMode){
-    const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
-    mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
-    selMarker=mapMarkers.length-1;
-    drawMap(); return;
-  }
-  // Check if clicking delete X of selected marker
+  mDownX=mx;mDownY=my;mDownMoved=false;
+
+  // Check if clicking delete X of selected marker first
   if(selMarker!==null){
     const m=mapMarkers[selMarker];
     const r=Math.max(26,32*mScale);
@@ -1479,19 +1494,20 @@ function mdStart(e){
       mapMarkers.splice(selMarker,1);selMarker=null;drawMap();return;
     }
   }
-  // Check if clicking a marker
+
+  // Check if hitting an existing marker — allow dragging it
   const hm=hitMarker(mx,my);
   if(hm!==-1){
-    if(selMarker===hm){
-      // Double-select = edit label
-      const m=mapMarkers[hm];
-      const newLabel=prompt('Etiqueta del marcador (dejar vacío para usar la predeterminada):',m.customLabel||MARKER_LABELS[m.type]||'');
-      if(newLabel!==null)m.customLabel=newLabel;
-    } else {
-      selMarker=hm;
-    }
+    mMarkerDrag=mapMarkers[hm];
+    selMarker=hm;
+    mMarkerSx=mx-mapMarkers[hm].x*mScale;
+    mMarkerSy=my-mapMarkers[hm].y*mScale;
     drawMap();return;
   }
+
+  // If entryMode active and no marker hit, we'll place on mouseup (if not dragged)
+  if(entryMode){ selMarker=null; drawMap(); return; }
+
   selMarker=null;
   const hit=mapTs.find(t=>hitT(t,mx,my));
   if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
@@ -1514,7 +1530,32 @@ function hitMarker(mx,my){
   return -1;
 }
 
-function mdMove(e){if(!mDrag)return;const{mx,my}=mc2(e);mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}
+function mdMove(e){
+  const{mx,my}=mc2(e);
+  if(Math.hypot(mx-mDownX,my-mDownY)>5) mDownMoved=true;
+  if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
+  if(!mDrag)return;
+  mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();
+}
+function mdUp(e){
+  const{mx,my}=mc2(e);
+  // Place new marker only if entryMode active and didn't drag and didn't hit existing marker
+  if(entryMode&&!mDownMoved&&mMarkerDrag===null){
+    const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
+    mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
+    selMarker=mapMarkers.length-1;
+    drawMap();
+  }
+  // Handle marker click (select / double-select to edit)
+  if(!mDownMoved&&mMarkerDrag!==null){
+    const mi=mapMarkers.indexOf(mMarkerDrag);
+    if(selMarker===mi&&mi!==-1){
+      const newLabel=prompt('Etiqueta del marcador:',mMarkerDrag.customLabel||MARKER_LABELS[mMarkerDrag.type]||'');
+      if(newLabel!==null)mMarkerDrag.customLabel=newLabel;
+    }
+  }
+  mDrag=null;mMarkerDrag=null;
+}
 function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
 function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);
   if(t.shape==='rect'||t.shape==='square') return mx>=x-r*1.4&&mx<=x+r*1.4&&my>=y-r*.75&&my<=y+r*.75;
