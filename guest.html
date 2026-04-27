@@ -669,7 +669,8 @@
     <div class="map-section" id="map-section">
       <div class="map-body open" id="map-body">
         <canvas id="guest-map-canvas"></canvas>
-        <div class="map-legend">Tu mesa está <span>resaltada</span> — puedes hacer zoom con dos dedos</div>
+        <div class="map-legend">Tu mesa está <span>resaltada</span> — los iconos muestran entradas, escenario y más
+        </div>
       </div>
     </div>
 
@@ -809,117 +810,190 @@ function resetSearch(){
 }
 
 /* ── GUEST MAP ── */
+const GM_COLORS={entry:'#22c55e',exit:'#f59e0b',stage:'#8b5cf6',bar:'#ec4899',dance:'#3b82f6'};
+const GM_ICONS={entry:'🚪',exit:'🚶',stage:'🎤',bar:'🍾',dance:'💃'};
+const GM_LABELS={entry:'Entrada',exit:'Salida',stage:'Escenario',bar:'Barra',dance:'Pista'};
+
 function drawGuestMap(highlightN){
   const canvas=document.getElementById('guest-map-canvas');
   const wrap=canvas.parentElement;
   const W=wrap.clientWidth;
-  const H=Math.min(320,W*.7);
+  // Parse markers
+  let markers=[];
+  try{if(ev.map_markers)markers=JSON.parse(ev.map_markers);}catch(x){}
+
+  const allItems=[...layout,...markers];
+  const hasItems=layout.length>0;
+  const H=Math.min(hasItems?420:200,W*.85);
   canvas.width=W;canvas.height=H;canvas.style.height=H+'px';
   const ctx2=canvas.getContext('2d');
-  if(!layout.length){
-    ctx2.fillStyle='rgba(255,255,255,0.3)';
-    ctx2.font='14px DM Sans';ctx2.textAlign='center';
+  ctx2.clearRect(0,0,W,H);
+
+  if(!hasItems){
+    ctx2.fillStyle='rgba(255,255,255,0.25)';
+    ctx2.font='13px DM Sans,sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
     ctx2.fillText('Mapa no disponible',W/2,H/2);return;
   }
 
-  // Compute bounds
-  const xs=layout.map(t=>t.x),ys=layout.map(t=>t.y);
-  const minX=Math.min(...xs),maxX=Math.max(...xs);
-  const minY=Math.min(...ys),maxY=Math.max(...ys);
-  const pad=32;
+  // Subtle dot grid background
+  ctx2.fillStyle='rgba(255,255,255,0.03)';
+  for(let x=0;x<W;x+=20)for(let y=0;y<H;y+=20){ctx2.beginPath();ctx2.arc(x,y,1,0,Math.PI*2);ctx2.fill();}
+
+  // Compute bounds including markers
+  const allX=[...layout.map(t=>t.x),...markers.map(m=>m.x)];
+  const allY=[...layout.map(t=>t.y),...markers.map(m=>m.y)];
+  const minX=Math.min(...allX),maxX=Math.max(...allX);
+  const minY=Math.min(...allY),maxY=Math.max(...allY);
+  const pad=40;
   const scX=(W-pad*2)/(maxX-minX||1);
   const scY=(H-pad*2)/(maxY-minY||1);
-  const sc=Math.min(scX,scY)*.88;
-  const offX=pad+(W-pad*2-(maxX-minX)*sc)/2;
-  const offY=pad+(H-pad*2-(maxY-minY)*sc)/2;
+  const sc=Math.min(scX,scY)*.85;
+  const offX=pad+(W-pad*2-(maxX-minX)*sc)/2-minX*sc;
+  const offY=pad+(H-pad*2-(maxY-minY)*sc)/2-minY*sc;
 
-  function tx(x){return(x-minX)*sc+offX;}
-  function ty(y){return(y-minY)*sc+offY;}
-  const r=Math.max(8,Math.min(18,sc*18));
+  function tx(x){return x*sc+offX;}
+  function ty(y){return y*sc+offY;}
+  const r=Math.max(9,Math.min(18,sc*16));
   const ac2=ev.color||'#b8973a';
 
-  // Background
-  ctx2.clearRect(0,0,W,H);
+  // Draw markers BEHIND tables
+  markers.forEach(m=>{
+    const x=tx(m.x),y=ty(m.y);
+    const col=GM_COLORS[m.type]||'#888';
+    const mr=Math.max(14,r*1.4);
+    ctx2.save();
+    // Glow halo
+    ctx2.shadowBlur=16;ctx2.shadowColor=col+'88';
+    ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);
+    ctx2.fillStyle=col+'33';ctx2.fill();
+    ctx2.shadowBlur=0;
+    ctx2.strokeStyle=col;ctx2.lineWidth=1.5;
+    ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);ctx2.stroke();
+    // Emoji icon
+    const emojiSz=Math.max(13,mr*1.05);
+    ctx2.font=`${emojiSz}px serif`;
+    ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.fillText(GM_ICONS[m.type]||'📍',x,y);
+    // Label pill below
+    const lbl=m.customLabel||GM_LABELS[m.type]||m.type;
+    const labelY=y+mr+9;
+    ctx2.font=`bold ${Math.max(7,9*Math.min(sc,1))}px 'DM Sans',sans-serif`;
+    ctx2.textBaseline='top';
+    const lw=ctx2.measureText(lbl).width+10;
+    ctx2.fillStyle='rgba(0,0,0,0.6)';
+    ctx2.beginPath();ctx2.roundRect?ctx2.roundRect(x-lw/2,labelY-1,lw,13,3):ctx2.fillRect(x-lw/2,labelY-1,lw,13);
+    ctx2.fill();
+    ctx2.fillStyle=col;
+    ctx2.fillText(lbl,x,labelY);
+    ctx2.restore();
+  });
 
+  // Draw tables (animated loop for highlight)
+  let pf=0;
+  function mapLoop(){
+    if(!foundTable||!document.getElementById('guest-map-canvas'))return;
+    pf=(pf+0.035)%(Math.PI*2);
+    ctx2.clearRect(0,0,W,H);
+    // Redraw dot grid
+    ctx2.fillStyle='rgba(255,255,255,0.03)';
+    for(let x=0;x<W;x+=20)for(let y=0;y<H;y+=20){ctx2.beginPath();ctx2.arc(x,y,1,0,Math.PI*2);ctx2.fill();}
+    // Redraw markers
+    markers.forEach(m=>{
+      const x=tx(m.x),y=ty(m.y);
+      const col=GM_COLORS[m.type]||'#888';
+      const mr=Math.max(14,r*1.4);
+      ctx2.save();
+      ctx2.shadowBlur=12;ctx2.shadowColor=col+'66';
+      ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);
+      ctx2.fillStyle=col+'30';ctx2.fill();
+      ctx2.shadowBlur=0;
+      ctx2.strokeStyle=col;ctx2.lineWidth=1.5;
+      ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);ctx2.stroke();
+      const emojiSz=Math.max(13,mr*1.05);
+      ctx2.font=`${emojiSz}px serif`;
+      ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.fillText(GM_ICONS[m.type]||'📍',x,y);
+      const lbl=m.customLabel||GM_LABELS[m.type]||m.type;
+      const labelY=y+mr+9;
+      ctx2.font=`bold ${Math.max(7,9*Math.min(sc,1))}px 'DM Sans',sans-serif`;
+      ctx2.textBaseline='top';
+      const lw=ctx2.measureText(lbl).width+10;
+      ctx2.fillStyle='rgba(0,0,0,0.6)';ctx2.fillRect(x-lw/2,labelY-1,lw,13);
+      ctx2.fillStyle=col;ctx2.fillText(lbl,x,labelY);
+      ctx2.restore();
+    });
+    // Draw tables
+    layout.forEach(t=>{
+      const x=tx(t.x),y=ty(t.y);
+      const isHL=t.table_number===highlightN;
+      ctx2.save();
+      if(isHL){
+        // Animated pulse ring
+        const pr=r+5+Math.sin(pf)*4;
+        ctx2.globalAlpha=0.3+Math.sin(pf)*0.2;
+        ctx2.beginPath();ctx2.arc(x,y,pr,0,Math.PI*2);
+        ctx2.strokeStyle=ac2;ctx2.lineWidth=2;ctx2.stroke();
+        ctx2.globalAlpha=1;
+        ctx2.shadowBlur=22;ctx2.shadowColor=ac2;
+      }
+      const shape=t.shape||'round';
+      const fill=isHL?ac2:'rgba(255,255,255,0.1)';
+      const stroke=isHL?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.12)';
+      if(shape==='rect'){
+        ctx2.fillStyle=fill;ctx2.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
+      } else if(shape==='oval'){
+        ctx2.beginPath();ctx2.ellipse(x,y,r*1.4,r*.8,0,0,Math.PI*2);
+        ctx2.fillStyle=fill;ctx2.fill();
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+      } else if(shape==='square'){
+        ctx2.fillStyle=fill;ctx2.fillRect(x-r,y-r,r*2,r*2);
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r,y-r,r*2,r*2);
+      } else {
+        ctx2.beginPath();ctx2.arc(x,y,r,0,Math.PI*2);
+        ctx2.fillStyle=fill;ctx2.fill();
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+      }
+      ctx2.shadowBlur=0;
+      ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.45)';
+      ctx2.font=`${isHL?Math.max(7,r*.68):Math.max(6,r*.55)}px 'DM Mono',monospace`;
+      ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.fillText(t.label||t.table_number,x,y);
+      ctx2.restore();
+    });
+    requestAnimationFrame(mapLoop);
+  }
+  // Static first draw for tables (before animation loop)
   layout.forEach(t=>{
     const x=tx(t.x),y=ty(t.y);
     const isHL=t.table_number===highlightN;
     ctx2.save();
-    if(isHL){ctx2.shadowBlur=18;ctx2.shadowColor=ac2;}
-    if(t.shape==='rect'){
-      ctx2.fillStyle=isHL?ac2:'rgba(255,255,255,0.12)';
-      ctx2.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
-      if(isHL){ctx2.strokeStyle='rgba(255,255,255,.5)';ctx2.lineWidth=1;ctx2.strokeRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);}
+    if(isHL){ctx2.shadowBlur=22;ctx2.shadowColor=ac2;}
+    const shape=t.shape||'round';
+    const fill=isHL?ac2:'rgba(255,255,255,0.1)';
+    const stroke=isHL?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.12)';
+    if(shape==='rect'){
+      ctx2.fillStyle=fill;ctx2.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
+      ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
+    } else if(shape==='oval'){
+      ctx2.beginPath();ctx2.ellipse(x,y,r*1.4,r*.8,0,0,Math.PI*2);
+      ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+    } else if(shape==='square'){
+      ctx2.fillStyle=fill;ctx2.fillRect(x-r,y-r,r*2,r*2);
+      ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r,y-r,r*2,r*2);
     } else {
       ctx2.beginPath();ctx2.arc(x,y,r,0,Math.PI*2);
-      ctx2.fillStyle=isHL?ac2:'rgba(255,255,255,0.12)';
-      ctx2.fill();
-      if(isHL){ctx2.strokeStyle='rgba(255,255,255,.5)';ctx2.lineWidth=1;ctx2.stroke();}
+      ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
     }
-    ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.5)';
-    ctx2.font=`${isHL?Math.max(7,r*.65):Math.max(6,r*.55)}px DM Mono,monospace`;
+    ctx2.shadowBlur=0;
+    ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.45)';
+    ctx2.font=`${isHL?Math.max(7,r*.68):Math.max(6,r*.55)}px 'DM Mono',monospace`;
     ctx2.textAlign='center';ctx2.textBaseline='middle';
     ctx2.fillText(t.label||t.table_number,x,y);
     ctx2.restore();
   });
-
-  // Pulse ring on highlighted
-  const hl=layout.find(t=>t.table_number===highlightN);
-  if(hl){
-    let pulse=0;
-    function animHL(){
-      if(!document.getElementById('guest-map-canvas')) return;
-      pulse=(pulse+0.04)%(Math.PI*2);
-      const pr=r+4+Math.sin(pulse)*4;
-      const ctx3=document.getElementById('guest-map-canvas').getContext('2d');
-      // Redraw just the ring
-      const x=tx(hl.x),y=ty(hl.y);
-      // Just use globalAlpha overlay for pulse
-      ctx3.save();
-      ctx3.globalAlpha=0.35+Math.sin(pulse)*0.25;
-      ctx3.beginPath();ctx3.arc(x,y,pr,0,Math.PI*2);
-      ctx3.strokeStyle=ac2;ctx3.lineWidth=1.5;ctx3.stroke();
-      ctx3.restore();
-      requestAnimationFrame(animHL);
-    }
-    // Re-draw map fresh each frame for pulse
-    let pf=0;
-    function mapLoop(){
-      if(!foundTable||!document.getElementById('guest-map-canvas'))return;
-      pf=(pf+0.03)%(Math.PI*2);
-      const c=document.getElementById('guest-map-canvas');
-      const ctx3=c.getContext('2d');
-      ctx3.clearRect(0,0,W,H);
-      layout.forEach(t=>{
-        const x=tx(t.x),y=ty(t.y);
-        const isHL=t.table_number===highlightN;
-        const pr=r+3+Math.sin(pf)*3.5;
-        ctx3.save();
-        if(isHL){
-          ctx3.globalAlpha=0.28+Math.sin(pf)*0.18;
-          ctx3.beginPath();ctx3.arc(x,y,pr,0,Math.PI*2);
-          ctx3.strokeStyle=ac2;ctx3.lineWidth=2;ctx3.stroke();
-          ctx3.globalAlpha=1;
-          ctx3.shadowBlur=16;ctx3.shadowColor=ac2;
-        }
-        if(t.shape==='rect'){
-          ctx3.fillStyle=isHL?ac2:'rgba(255,255,255,0.1)';
-          ctx3.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
-        }else{
-          ctx3.beginPath();ctx3.arc(x,y,r,0,Math.PI*2);
-          ctx3.fillStyle=isHL?ac2:'rgba(255,255,255,0.1)';ctx3.fill();
-        }
-        ctx3.shadowBlur=0;
-        ctx3.fillStyle=isHL?'#fff':'rgba(255,255,255,0.4)';
-        ctx3.font=`${isHL?Math.max(7,r*.65):Math.max(6,r*.55)}px DM Mono,monospace`;
-        ctx3.textAlign='center';ctx3.textBaseline='middle';
-        ctx3.fillText(t.label||t.table_number,x,y);
-        ctx3.restore();
-      });
-      requestAnimationFrame(mapLoop);
-    }
-    mapLoop();
-  }
+  // Start animated loop for highlighted table pulse
+  if(highlightN) mapLoop();
 }
 
 /* ── AMBIENT ANIMATION ── */

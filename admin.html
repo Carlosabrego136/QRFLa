@@ -1200,12 +1200,15 @@
           </div>
           <div class="map-entry-row">
             <label>Marcadores:</label>
-            <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 + Entrada</div>
-            <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">↩ + Salida</div>
-            <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 + Escenario</div>
-            <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 + Barra</div>
-            <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 + Pista</div>
-            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Selecciona un marcador y haz clic en el mapa</span>
+            <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
+            <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">🚶 Salida</div>
+            <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 Escenario</div>
+            <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 Barra</div>
+            <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 Pista</div>
+            <div class="entry-btn" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"
+              onclick="delSelMarker()">✕ Borrar</div>
+            <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
+            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
           </div>
           <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
@@ -1333,7 +1336,7 @@ function gt(n){
 
 /* OPEN/EDIT */
 function openNew(){
-  curEv=null;curGs=[];mapTs=[];bgD=null;bgT=null;
+  curEv=null;curGs=[];mapTs=[];mapMarkers=[];selMarker=null;bgD=null;bgT=null;
   ['en','ed','ev','eh','ew'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('etn').value='20';
   document.getElementById('eo').value='vertical';
@@ -1368,6 +1371,9 @@ async function editEv(id){
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
+  // Load markers from event data (stored as JSON in map_markers column)
+  mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
+  selMarker=null;
   rGuests();
   document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
   gt(0);document.getElementById('modal').classList.add('open');
@@ -1378,7 +1384,7 @@ async function saveEv(){
   const name=document.getElementById('en').value.trim();
   if(!name){toast('Ingresa el nombre');gt(0);return;}
   toast('Guardando...');
-  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize};
+  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers)};
   let eid;
   if(curEv){
     await db.patch('events',curEv.id,data);eid=curEv.id;
@@ -1414,6 +1420,9 @@ function pColor(el){document.querySelectorAll('.sw').forEach(s=>s.classList.remo
 function sColor(c){selC=c;document.getElementById('ec').value=c;}
 function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
 
+function delSelMarker(){if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}else toast('Selecciona un marcador primero');}
+function editSelMarker(){if(selMarker===null){toast('Selecciona un marcador primero');return;}const m=mapMarkers[selMarker];const nl=prompt('Etiqueta del marcador:',m.customLabel||MARKER_LABELS[m.type]||'');if(nl!==null){m.customLabel=nl;drawMap();}}
+
 /* MAP EDITOR */
 function setShape(el, s) {
   document.querySelectorAll('.shape-opt').forEach(o=>o.classList.remove('active'));
@@ -1428,8 +1437,10 @@ function toggleEntryMode(type) {
   });
 }
 
-const MARKER_ICONS={entry:'🚪',exit:'↩',stage:'🎤',bar:'🍾',dance:'💃'};
+const MARKER_ICONS={entry:'🚪',exit:'🚶',stage:'🎤',bar:'🍾',dance:'💃'};
+const MARKER_LABELS={entry:'Entrada',exit:'Salida',stage:'Escenario',bar:'Barra',dance:'Pista'};
 const MARKER_COLORS={entry:'#22c55e',exit:'#f59e0b',stage:'#8b5cf6',bar:'#ec4899',dance:'#3b82f6'};
+let selMarker=null;
 
 function initMap(){
   const w=document.getElementById('mw');
@@ -1443,7 +1454,10 @@ function initMap(){
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;const hit=mapTs.find(t=>hitT(t,mx,my));if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}drawMap();};
   mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;if(mDrag){mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}};
   mc.ontouchend=()=>mDrag=null;
-  document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&selT&&document.getElementById('modal').classList.contains('open')){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}});
+  document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&document.getElementById('modal').classList.contains('open')){
+    if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
+    else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
+  }});
 }
 
 function mdStart(e){
@@ -1451,9 +1465,34 @@ function mdStart(e){
   // Si hay modo de marcador activo, agregar marcador
   if(entryMode){
     const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
-    mapMarkers.push({type:entryMode,x:rx,y:ry,label:MARKER_ICONS[entryMode]});
+    mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
+    selMarker=mapMarkers.length-1;
     drawMap(); return;
   }
+  // Check if clicking delete X of selected marker
+  if(selMarker!==null){
+    const m=mapMarkers[selMarker];
+    const r=Math.max(26,32*mScale);
+    const mx2=m.x*mScale+mPan.x+r-4, my2=m.y*mScale+mPan.y-r+4;
+    const xr=Math.max(8,10*mScale);
+    if(Math.hypot(mx-mx2,my-my2)<=xr){
+      mapMarkers.splice(selMarker,1);selMarker=null;drawMap();return;
+    }
+  }
+  // Check if clicking a marker
+  const hm=hitMarker(mx,my);
+  if(hm!==-1){
+    if(selMarker===hm){
+      // Double-select = edit label
+      const m=mapMarkers[hm];
+      const newLabel=prompt('Etiqueta del marcador (dejar vacío para usar la predeterminada):',m.customLabel||MARKER_LABELS[m.type]||'');
+      if(newLabel!==null)m.customLabel=newLabel;
+    } else {
+      selMarker=hm;
+    }
+    drawMap();return;
+  }
+  selMarker=null;
   const hit=mapTs.find(t=>hitT(t,mx,my));
   if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
   else{
@@ -1464,6 +1503,15 @@ function mdStart(e){
     document.getElementById('mtn').value=tn+1;
   }
   drawMap();
+}
+function hitMarker(mx,my){
+  for(let i=0;i<mapMarkers.length;i++){
+    const m=mapMarkers[i];
+    const x=m.x*mScale+mPan.x,y=m.y*mScale+mPan.y;
+    const r=Math.max(26,32*mScale);
+    if(Math.hypot(mx-x,my-y)<=r)return i;
+  }
+  return -1;
 }
 
 function mdMove(e){if(!mDrag)return;const{mx,my}=mc2(e);mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}
@@ -1479,24 +1527,46 @@ function drawMap(){
   mctx.fillStyle='rgba(0,0,0,0.05)';
   for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
   
-  // Draw markers first (behind tables)
-  mapMarkers.forEach(m=>{
+  // Draw markers (large, visible icons)
+  mapMarkers.forEach((m,mi)=>{
     const x=m.x*mScale+mPan.x, y=m.y*mScale+mPan.y;
     const col=MARKER_COLORS[m.type]||'#888';
+    const r=Math.max(26,32*mScale);
+    const isSel=selMarker===mi;
     mctx.save();
-    mctx.fillStyle=col+'33';
-    mctx.beginPath(); mctx.arc(x,y,24*mScale,0,Math.PI*2); mctx.fill();
-    mctx.strokeStyle=col; mctx.lineWidth=1.5;
-    mctx.beginPath(); mctx.arc(x,y,24*mScale,0,Math.PI*2); mctx.stroke();
-    mctx.font=`${Math.max(12,16*mScale)}px sans-serif`;
+    // Glow for selected
+    if(isSel){mctx.shadowBlur=20;mctx.shadowColor=col;}
+    // Background circle
+    mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2);
+    mctx.fillStyle=col+(isSel?'cc':'55'); mctx.fill();
+    mctx.strokeStyle=col; mctx.lineWidth=isSel?3:2;
+    mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2); mctx.stroke();
+    mctx.shadowBlur=0;
+    // Emoji icon — large and visible
+    const emojiSize=Math.max(18,22*mScale);
+    mctx.font=`${emojiSize}px serif`;
     mctx.textAlign='center'; mctx.textBaseline='middle';
-    mctx.fillStyle='rgba(0,0,0,0)';
-    mctx.fillText(m.label,x,y);
-    mctx.fillStyle=col;
-    // Draw emoji/text
-    mctx.font=`${Math.max(10,14*mScale)}px sans-serif`;
-    mctx.fillStyle='#333';
-    mctx.fillText(m.label,x,y);
+    mctx.fillText(MARKER_ICONS[m.type]||'📍',x,y);
+    // Label below
+    const labelY=y+r+Math.max(10,13*mScale);
+    mctx.font=`bold ${Math.max(9,11*mScale)}px 'DM Sans',sans-serif`;
+    mctx.textBaseline='top';
+    // Background for label
+    const lw=mctx.measureText(m.customLabel||MARKER_LABELS[m.type]||m.type).width+8;
+    mctx.fillStyle='rgba(0,0,0,0.65)';
+    mctx.fillRect(x-lw/2,labelY-2,lw,Math.max(14,16*mScale));
+    mctx.fillStyle='#fff';
+    mctx.fillText(m.customLabel||MARKER_LABELS[m.type]||m.type,x,labelY);
+    // Delete X if selected
+    if(isSel){
+      mctx.font=`bold ${Math.max(10,12*mScale)}px sans-serif`;
+      mctx.fillStyle='#fff';
+      mctx.textBaseline='middle';
+      const xbx=x+r-4,xby=y-r+4;
+      mctx.beginPath();mctx.arc(xbx,xby,Math.max(8,10*mScale),0,Math.PI*2);
+      mctx.fillStyle='#dc2626';mctx.fill();
+      mctx.fillStyle='#fff';mctx.fillText('✕',xbx,xby);
+    }
     mctx.restore();
   });
 
