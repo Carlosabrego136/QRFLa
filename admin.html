@@ -1939,8 +1939,25 @@ function centerM(){
   drawMap();
 }
 
-function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
-function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function zoomIn(){
+  // Zoom hacia el centro del canvas
+  const cx=mW/2, cy=mH/2;
+  const factor=1.25;
+  mPan.x=cx-(cx-mPan.x)*factor;
+  mPan.y=cy-(cy-mPan.y)*factor;
+  mScale=Math.min(5,mScale*factor);
+  drawMap();
+}
+
+function zoomOut(){
+  // Zoom alejando desde el centro del canvas
+  const cx=mW/2, cy=mH/2;
+  const factor=0.8;
+  mPan.x=cx-(cx-mPan.x)*factor;
+  mPan.y=cy-(cy-mPan.y)*factor;
+  mScale=Math.max(0.1,mScale*factor);
+  drawMap();
+}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
 
 let mapFullscreen=false;

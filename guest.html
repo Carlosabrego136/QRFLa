@@ -782,7 +782,7 @@ function showResult(name,tnum){
   document.getElementById('map-section').style.display='block';
   document.getElementById('again').style.display='block';
 
-  // Auto-open map
+  // Abrir el mapa PRIMERO para que tenga dimensiones reales al dibujar
   const mapBody=document.getElementById('map-body');
   mapBody.classList.add('open');
   const btn=document.getElementById('map-toggle-btn');
@@ -791,16 +791,12 @@ function showResult(name,tnum){
   // Trigger celebration animation
   triggerCelebration();
 
-  // Draw map — esperar a que el DOM tenga dimensiones reales
-  setTimeout(()=>{
-    const canvas=document.getElementById('guest-map-canvas');
-    const wrap=canvas.parentElement;
-    if(wrap.clientWidth>0){
+  // Dibujar mapa: esperar 2 frames para que el DOM procese display:block
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
       drawGuestMap(tnum);
-    } else {
-      setTimeout(()=>drawGuestMap(tnum),300);
-    }
-  },100);
+    });
+  });
 
   setTimeout(()=>document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}),150);
 }
@@ -812,8 +808,10 @@ function toggleMap(){
   const isOpen=body.classList.contains('open');
   if(btn) btn.textContent=isOpen?'🗺 Ver mapa de mesas ▴':'🗺 Ver mapa de mesas ▾';
   if(isOpen&&foundTable){
-    // Redibujar con un pequeño delay para que el elemento tenga dimensiones
-    setTimeout(()=>drawGuestMap(foundTable),50);
+    // Doble rAF para que el display:block se aplique antes de medir
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>drawGuestMap(foundTable));
+    });
   }
 }
 
@@ -839,17 +837,25 @@ const GM_LABELS={entry:'Entrada',exit:'Salida',stage:'Escenario',bar:'Barra',dan
 
 function drawGuestMap(highlightN){
   const canvas=document.getElementById('guest-map-canvas');
+  if(!canvas)return;
   const wrap=canvas.parentElement;
-  const W=wrap.clientWidth;
+
+  // Si el contenedor está oculto (display:none), usar un ancho estimado
+  let W=wrap.clientWidth||wrap.offsetWidth||document.getElementById('result').clientWidth||360;
+  if(W<10) W=Math.min(window.innerWidth-32, 440);
 
   // Parse markers
   let markers=[];
   try{if(ev.map_markers)markers=JSON.parse(ev.map_markers);}catch(x){}
 
   const hasItems=layout.length>0;
-  // Altura suficiente — no se corte
-  const H=Math.min(Math.max(hasItems?380:180, W*0.7), 480);
-  canvas.width=W; canvas.height=H; canvas.style.height=H+'px';
+  const H=Math.min(Math.max(hasItems?380:180, W*0.65), 500);
+
+  // Forzar dimensiones en el canvas
+  canvas.width=W; canvas.height=H;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  canvas.style.display='block';
+
   const ctx2=canvas.getContext('2d');
 
   if(!hasItems){
