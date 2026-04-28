@@ -1448,7 +1448,7 @@ function initMap(){
   mW=w.clientWidth;mH=w.clientHeight;
   mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
-  if(!mapTs.length)autoL();else drawMap();
+  if(!mapTs.length&&curEv===null)autoL();else drawMap();
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.25,Math.min(4,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
