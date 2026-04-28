@@ -618,6 +618,39 @@
       border: 1px solid var(--line);
       background: var(--paper);
       overflow: hidden;
+      transition: height 0.3s ease;
+    }
+
+    .map-wrap.expanded {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh !important;
+      z-index: 9999;
+      border: none;
+      background: var(--paper);
+    }
+
+    .map-expand-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      color: var(--ink);
+    }
+
+    .map-expand-btn:hover {
+      background: var(--ink);
+      color: #fff;
     }
 
     #map-canvas {
@@ -1212,7 +1245,10 @@
             <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
             <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
           </div>
-          <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
+          <div class="map-wrap" id="mw">
+            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()">⤢ Expandir</button>
+            <canvas id="map-canvas"></canvas>
+          </div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn bo" onclick="gt(2)">← Anterior</button>
             <button class="btn bi" onclick="gt(4)">Siguiente →</button>
@@ -1459,14 +1495,19 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
-  mW=w.clientWidth;mH=w.clientHeight;
+  // Usar getBoundingClientRect para dimensiones reales aunque el tab acabe de mostrarse
+  const rect=w.getBoundingClientRect();
+  mW=rect.width||w.offsetWidth||800;
+  mH=rect.height||w.offsetHeight||480;
   mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
   if(!mapTs.length&&curEv===null){
     autoL();
   } else {
-    // Siempre centrar — funciona tanto para mesas nuevas como cargadas de DB
-    setTimeout(()=>centerM(), 50); // pequeño delay para que mW/mH estén listos
+    drawMap();
+    // Centrar con dos intentos: inmediato y con delay por si el layout no terminó
+    centerM();
+    setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 80);
   }
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
@@ -1685,6 +1726,28 @@ function autoL(){
   centerM(); // centrar siempre al auto-generar
 }
 
+function resizeMapCanvas(){
+  const w=document.getElementById('mw');
+  if(!w||!mc)return;
+  const rect=w.getBoundingClientRect();
+  mW=rect.width||w.offsetWidth||800;
+  mH=rect.height||w.offsetHeight||480;
+  mc.width=mW;mc.height=mH;
+  drawMap();
+}
+
+let mapIsExpanded=false;
+function toggleMapExpand(){
+  const w=document.getElementById('mw');
+  const btn=document.getElementById('map-expand-btn');
+  mapIsExpanded=!mapIsExpanded;
+  w.classList.toggle('expanded', mapIsExpanded);
+  btn.textContent=mapIsExpanded?'✕ Cerrar':'⤢ Expandir';
+  // Bloquear scroll del body cuando está expandido
+  document.body.style.overflow=mapIsExpanded?'hidden':'';
+  setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 50);
+}
+
 function centerM(){
   if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
   const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
@@ -1705,6 +1768,7 @@ function centerM(){
 
 function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
 function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function zoomM(f){mScale=Math.max(0.15,Math.min(5,mScale*f));drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
 
 /* QR */
@@ -1775,7 +1839,10 @@ function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero')
 function openDispById(id){window.open(dURL(id),'_blank');}
 
 /* UI */
-function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeModal(){
+  if(mapIsExpanded)toggleMapExpand();
+  document.getElementById('modal').classList.remove('open');
+}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 loadDash();
