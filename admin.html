@@ -1652,12 +1652,14 @@ function drawMap(){
     mctx.fillText(MARKER_ICONS[m.type]||'📍',x,y);
     // Label below
     const labelY=y+r+Math.max(10,13*mScale);
+    const labelH=Math.max(14,16*mScale);
     mctx.font=`bold ${Math.max(9,11*mScale)}px 'DM Sans',sans-serif`;
-    mctx.textBaseline='top';
+    mctx.textAlign='center';
+    mctx.textBaseline='middle';
     // Background for label
     const lw=mctx.measureText(m.customLabel||MARKER_LABELS[m.type]||m.type).width+8;
     mctx.fillStyle='rgba(0,0,0,0.65)';
-    mctx.fillRect(x-lw/2,labelY-2,lw,Math.max(14,16*mScale));
+    mctx.fillRect(x-lw/2,labelY-labelH/2,lw,labelH);
     mctx.fillStyle='#fff';
     mctx.fillText(m.customLabel||MARKER_LABELS[m.type]||m.type,x,labelY);
     // Delete X if selected
@@ -1704,7 +1706,9 @@ function drawMap(){
     }
     mctx.fillStyle='#fff';
     mctx.font=`${Math.max(8,10*mScale)}px 'DM Mono',monospace`;
-    mctx.textAlign='center';mctx.textBaseline='middle';
+    mctx.textAlign='center';
+    mctx.textBaseline='middle';
+    mctx.shadowBlur=0;
     mctx.fillText(t.label||t.table_number,x,y);
     mctx.restore();
   });
