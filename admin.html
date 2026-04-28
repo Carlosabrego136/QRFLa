@@ -1215,35 +1215,43 @@
 
         <!-- T3 MAPA -->
         <div id="t3" style="display:none">
-          <div class="map-tb">
-            <div class="shape-row" id="shape-row">
-              <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
-              <div class="shape-opt active" data-s="round" onclick="setShape(this,'round')">⭕ Redonda</div>
-              <div class="shape-opt" data-s="rect" onclick="setShape(this,'rect')">▬ Rect.</div>
-              <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
-              <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
+          <div id="map-view-bar"
+            style="display:none;align-items:center;gap:10px;padding:8px 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px;">
+            <span style="font-size:0.7rem;color:#dc2626;font-weight:500;">⚠ Vista del mapa guardado</span>
+            <span style="font-size:0.62rem;color:var(--gray);flex:1;">Si quieres editar las mesas oprime <strong>Auto</strong>, esto reordenará las mesas pero las etiquetas no.</span>
+            <button class="btn bi bs" onclick="enableMapEdit()">✏️ Editar mapa</button>
+          </div>
+          <div id="map-edit-controls">
+            <div class="map-tb">
+              <div class="shape-row" id="shape-row">
+                <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
+                <div class="shape-opt active" data-s="round" onclick="setShape(this,'round')">⭕ Redonda</div>
+                <div class="shape-opt" data-s="rect" onclick="setShape(this,'rect')">▬ Rect.</div>
+                <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
+                <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
+              </div>
             </div>
-          </div>
-          <div class="map-tb">
-            <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
-            <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
-            <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
-            <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
-            <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
-            <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
-            <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
-          </div>
-          <div class="map-entry-row">
-            <label>Marcadores:</label>
-            <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
-            <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">🚶 Salida</div>
-            <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 Escenario</div>
-            <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 Barra</div>
-            <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 Pista</div>
-            <div class="entry-btn" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"
-              onclick="delSelMarker()">✕ Borrar</div>
-            <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
-            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
+            <div class="map-tb">
+              <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
+              <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
+              <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
+              <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
+              <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
+              <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
+              <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
+            </div>
+            <div class="map-entry-row">
+              <label>Marcadores:</label>
+              <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
+              <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">🚶 Salida</div>
+              <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 Escenario</div>
+              <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 Barra</div>
+              <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 Pista</div>
+              <div class="entry-btn" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"
+                onclick="delSelMarker()">✕ Borrar</div>
+              <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
+              <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
+            </div>
           </div>
           <div class="map-wrap" id="mw">
             <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()">⤢ Expandir</button>
@@ -1467,6 +1475,22 @@ function pColor(el){document.querySelectorAll('.sw').forEach(s=>s.classList.remo
 function sColor(c){selC=c;document.getElementById('ec').value=c;}
 function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
 
+function setMapEditMode(editing){
+  const viewBar=document.getElementById('map-view-bar');
+  const editControls=document.getElementById('map-edit-controls');
+  const canvas=document.getElementById('map-canvas');
+  if(viewBar) viewBar.style.display=editing?'none':'flex';
+  if(editControls) editControls.style.display=editing?'block':'none';
+  // Canvas: crosshair cuando edita, default cuando solo ve
+  if(canvas) canvas.style.cursor=editing?'crosshair':'default';
+  // Bloquear/desbloquear interacción del canvas
+  if(canvas) canvas.style.pointerEvents=editing?'auto':'none';
+}
+
+function enableMapEdit(){
+  setMapEditMode(true);
+}
+
 function delSelMarker(){if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}else toast('Selecciona un marcador primero');}
 function editSelMarker(){if(selMarker===null){toast('Selecciona un marcador primero');return;}const m=mapMarkers[selMarker];const nl=prompt('Etiqueta del marcador:',m.customLabel||MARKER_LABELS[m.type]||'');if(nl!==null){m.customLabel=nl;drawMap();}}
 
@@ -1531,9 +1555,17 @@ function initMap(){
     mH=rect.height||w.offsetHeight||480;
     mc.width=mW;mc.height=mH;
     if(!mapTs.length&&curEv===null){
+      // Evento nuevo — auto layout y controles activos
+      setMapEditMode(true);
       autoL();
-    } else {
+    } else if(curEv&&mapTs.length){
+      // Evento existente con mesas — mostrar tal como se guardó, en modo vista
+      setMapEditMode(false);
       centerM();
+    } else {
+      // Evento existente sin mesas aún — activar edición directo
+      setMapEditMode(true);
+      drawMap();
     }
   }));
 }
