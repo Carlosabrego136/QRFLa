@@ -982,57 +982,6 @@
       color: var(--ink);
       min-width: 42px;
     }
-
-    /* MAP EXPANDED MODE */
-    .mo.map-expanded {
-      max-width: 98vw;
-      width: 98vw;
-      max-height: 98vh;
-    }
-
-    .mo.map-expanded .map-wrap {
-      height: calc(98vh - 320px);
-      min-height: 380px;
-    }
-
-    .map-expand-btn {
-      background: none;
-      border: 1px solid var(--line);
-      cursor: pointer;
-      color: var(--gray);
-      font-size: 0.7rem;
-      padding: 3px 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.15s;
-      font-family: 'DM Sans', sans-serif;
-      white-space: nowrap;
-    }
-
-    .map-expand-btn:hover {
-      border-color: var(--ink);
-      color: var(--ink);
-    }
-
-    .map-auto-hint {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-      font-size: 0.7rem;
-      color: #92400e;
-      line-height: 1.45;
-    }
-
-    .map-auto-hint-icon {
-      font-size: 0.95rem;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
   </style>
 </head>
 
@@ -1233,10 +1182,6 @@
 
         <!-- T3 MAPA -->
         <div id="t3" style="display:none">
-          <div class="map-auto-hint">
-            <span class="map-auto-hint-icon">💡</span>
-            <span><strong>Tip:</strong> Si mueves o agregas mesas manualmente y necesitas reordenarlas, presiona <strong>⊞ Auto</strong> para redistribuirlas automáticamente. Usa <strong>⊡ Centrar</strong> para ajustar la vista después de mover elementos.</span>
-          </div>
           <div class="map-tb">
             <div class="shape-row" id="shape-row">
               <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
@@ -1245,7 +1190,6 @@
               <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
               <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
             </div>
-            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()" title="Expandir/contraer editor">⛶ Expandir</button>
           </div>
           <div class="map-tb">
             <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
@@ -1515,21 +1459,15 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
-  mctx=null; // reset until resize done
-  // Use requestAnimationFrame to guarantee the DOM has rendered the tab before measuring
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      mW=w.clientWidth||w.offsetWidth;
-      mH=w.clientHeight||w.offsetHeight;
-      mc.width=mW; mc.height=mH;
-      mctx=mc.getContext('2d');
-      if(!mapTs.length && curEv===null){
-        autoL();
-      } else {
-        centerM();
-      }
-    });
-  });
+  mW=w.clientWidth;mH=w.clientHeight;
+  mc.width=mW;mc.height=mH;
+  mctx=mc.getContext('2d');
+  if(!mapTs.length&&curEv===null){
+    autoL();
+  } else {
+    // Siempre centrar — funciona tanto para mesas nuevas como cargadas de DB
+    setTimeout(()=>centerM(), 50); // pequeño delay para que mW/mH estén listos
+  }
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
@@ -1648,19 +1586,9 @@ function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(
 function drawMap(){
   if(!mctx)return;
   mctx.clearRect(0,0,mW,mH);
-  // Subtle line grid
-  const gStep=40;
-  mctx.save();
-  mctx.strokeStyle='rgba(0,0,0,0.07)';
-  mctx.lineWidth=0.5;
-  for(let x=0;x<mW;x+=gStep){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
-  for(let y=0;y<mH;y+=gStep){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
-  // Accent lines every 5 cells
-  mctx.strokeStyle='rgba(0,0,0,0.12)';
-  mctx.lineWidth=0.7;
-  for(let x=0;x<mW;x+=gStep*5){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
-  for(let y=0;y<mH;y+=gStep*5){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
-  mctx.restore();
+  // Dot grid
+  mctx.fillStyle='rgba(0,0,0,0.05)';
+  for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
   
   // Draw markers (large, visible icons)
   mapMarkers.forEach((m,mi)=>{
@@ -1742,67 +1670,22 @@ function drawMap(){
   });
 }
 
-function ensureCanvas(){
-  const w=document.getElementById('mw');
-  if(!w)return false;
-  if(!mc)mc=document.getElementById('map-canvas');
-  if(!mc)return false;
-  const rect=w.getBoundingClientRect();
-  const rW=rect.width||w.offsetWidth||800;
-  const rH=rect.height||w.offsetHeight||480;
-  if(!mctx||mc.width!==rW||mc.height!==rH){
-    mW=rW;mH=rH;
-    mc.width=mW;mc.height=mH;
-    mctx=mc.getContext('2d');
-  }
-  return !!mctx;
-}
-
 function autoL(){
-  if(!ensureCanvas())return;
   const n=parseInt(document.getElementById('etn').value)||20;
-
-  // Si ya hay mesas, conservar posiciones y solo agregar las que faltan
-  if(mapTs.length>0){
-    const existing=new Set(mapTs.map(t=>t.table_number));
-    const missing=[];
-    for(let i=1;i<=n;i++){if(!existing.has(i))missing.push(i);}
-
-    if(missing.length===0){
-      // Todas ya existen — solo recentrar la vista
-      toast('✦ Mesas ya colocadas · centrando vista');
-      centerM();return;
-    }
-
-    // Colocar las nuevas debajo del bounding box actual
-    const allY=mapTs.map(t=>t.y);
-    const allX=mapTs.map(t=>t.x);
-    const maxY=Math.max(...allY);
-    const minX=Math.min(...allX), maxX=Math.max(...allX);
-    const zoneW=Math.max(maxX-minX,600);
-    const cols=Math.ceil(Math.sqrt(missing.length*1.3))||1;
-    const cw=zoneW/cols;
-    missing.forEach((tn,i)=>{
-      const c=i%cols, ro=Math.floor(i/cols);
-      mapTs.push({table_number:tn,x:minX+c*cw+cw/2,y:maxY+120+ro*120,shape:mShape,label:String(tn)});
-    });
-    toast('✦ '+missing.length+' mesa(s) nueva(s) agregada(s)');
-    centerM();return;
-  }
-
-  // Sin mesas previas — generar todas en cuadricula desde cero
+  mapTs=[];
   const cols=Math.ceil(Math.sqrt(n*1.3));
+  const rows=Math.ceil(n/cols);
+  // Espacio lógico fijo de 1000x800 — independiente del canvas
   const LOGICAL_W=1000, LOGICAL_H=800;
-  const cw=LOGICAL_W/cols, ch=LOGICAL_H/Math.ceil(n/cols);
+  const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
   for(let i=0;i<n;i++){
     const c=i%cols, ro=Math.floor(i/cols);
     mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
   }
-  centerM();
+  centerM(); // centrar siempre al auto-generar
 }
 
 function centerM(){
-  if(!ensureCanvas()){requestAnimationFrame(centerM);return;}
   if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
   const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
   const allY=[...mapTs.map(t=>t.y),...mapMarkers.map(m=>m.y)];
@@ -1813,29 +1696,16 @@ function centerM(){
   const scX=(mW-pad*2)/rangeX;
   const scY=(mH-pad*2)/rangeY;
   mScale=Math.max(0.1,Math.min(4,Math.min(scX,scY)*0.88));
+  // Centrar: el centro del bounding box queda en el centro del canvas
   const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
   mPan.x=mW/2 - cx*mScale;
   mPan.y=mH/2 - cy*mScale;
   drawMap();
 }
 
-function zoomIn(){if(!ensureCanvas())return;mScale=Math.min(5,mScale*1.25);drawMap();}
-function zoomOut(){if(!ensureCanvas())return;mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
+function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
-
-/* MAP EXPAND */
-function toggleMapExpand(){
-  const mo=document.querySelector('.mo');
-  const btn=document.getElementById('map-expand-btn');
-  const isExp=mo.classList.toggle('map-expanded');
-  btn.textContent=isExp?'⛶ Contraer':'⛶ Expandir';
-  setTimeout(()=>{
-    const mw=document.getElementById('mw');
-    mW=mw.offsetWidth; mH=mw.offsetHeight;
-    mc.width=mW; mc.height=mH;
-    drawMap();
-  },50);
-}
 
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
