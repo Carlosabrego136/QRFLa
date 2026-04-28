@@ -1356,142 +1356,162 @@
     }
 
     function updateStats() {
-      document.getElementById('s0').textContent = evs.length;
-      let totalG = 0, totalM = 0;
-      evs.forEach(e => { totalG += (e.guests_count || 0); totalM += (e.tables_count || 0); });
-      document.getElementById('s1').textContent = totalG;
-      document.getElementById('s2').textContent = totalM;
-      document.getElementById('s3').textContent = evs.length;
+    document.getElementById('s0').textContent = evs.length;
+    let totalG = 0, totalM = 0;
+    evs.forEach(e => { totalG += (e.guests_count || 0); totalM += (e.tables_count || 0); });
+    document.getElementById('s1').textContent = totalG;
+    document.getElementById('s2').textContent = totalM;
+    document.getElementById('s3').textContent = evs.length;
     }
-
+    
     async function loadGs() {
-      const all = await db.get('guests');
-      const container = document.getElementById('g-all');
-      if (!all.length) { container.innerHTML = '<div class="empty">No hay invitados registrados</div>'; return; }
-      let h = '<table class="gt"><thead><tr><th>Nombre</th><th>Mesa</th><th>Evento</th></tr></thead><tbody>';
-      all.forEach(g => {
+    const all = await db.get('guests');
+    const container = document.getElementById('g-all');
+    if (!all.length) { container.innerHTML = '<div class="empty">No hay invitados registrados</div>'; return; }
+    let h = '<table class="gt">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Mesa</th>
+          <th>Evento</th>
+        </tr>
+      </thead>
+      <tbody>';
+        all.forEach(g => {
         const ev = evs.find(e => e.id === g.event_id);
-        h += `<tr><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td>${ev ? ev.name : '—'}</td></tr>`;
-      });
-      h += '</tbody></table>';
-      container.innerHTML = h;
+        h += `<tr>
+          <td>${g.name}</td>
+          <td><span class="tb">${g.table_number}</span></td>
+          <td>${ev ? ev.name : '—'}</td>
+        </tr>`;
+        });
+        h += '</tbody>
+    </table>';
+    container.innerHTML = h;
     }
-
+    
     function openNew() {
-      curEv = null; curGs = []; mapTs = []; mapMarkers = []; bgD = null; bgT = null; selC = '#b8973a'; selA = 'particles'; qrSize = 200;
-      document.getElementById('mo-title').innerHTML = 'Nuevo <em>Evento</em>';
-      ['en', 'ed', 'ev', 'eh', 'ew', 'mtn'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('et').value = 'Boda';
-      document.getElementById('eo').value = 'vertical';
-      document.getElementById('etn').value = '20';
-      document.getElementById('bg-prev').innerHTML = '';
-      document.getElementById('qu').textContent = '—';
-      document.getElementById('qrcode').innerHTML = '';
-      pColor(document.querySelector('.sw'));
-      pAnim(document.querySelector('.ao'));
-      renderGs();
-      gt(0);
-      document.getElementById('modal').classList.add('open');
-      setTimeout(resizeM, 100);
+    curEv = null; curGs = []; mapTs = []; mapMarkers = []; bgD = null; bgT = null; selC = '#b8973a'; selA = 'particles';
+    qrSize = 200;
+    document.getElementById('mo-title').innerHTML = 'Nuevo <em>Evento</em>';
+    ['en', 'ed', 'ev', 'eh', 'ew', 'mtn'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('et').value = 'Boda';
+    document.getElementById('eo').value = 'vertical';
+    document.getElementById('etn').value = '20';
+    document.getElementById('bg-prev').innerHTML = '';
+    document.getElementById('qu').textContent = '—';
+    document.getElementById('qrcode').innerHTML = '';
+    pColor(document.querySelector('.sw'));
+    pAnim(document.querySelector('.ao'));
+    renderGs();
+    gt(0);
+    document.getElementById('modal').classList.add('open');
+    setTimeout(resizeM, 100);
     }
-
+    
     async function editEv(id) {
-      curEv = evs.find(e => e.id === id);
-      document.getElementById('mo-title').innerHTML = 'Editar <em>Evento</em>';
-      document.getElementById('en').value = curEv.name;
-      document.getElementById('ed').value = curEv.date;
-      document.getElementById('ev').value = curEv.venue;
-      document.getElementById('eh').value = curEv.host_name;
-      document.getElementById('ew').value = curEv.welcome_msg || '';
-      document.getElementById('et').value = curEv.type;
-      document.getElementById('eo').value = curEv.orientation || 'vertical';
-      document.getElementById('etn').value = curEv.tables_count || 20;
-      selC = curEv.accent_color || '#b8973a';
-      selA = curEv.animation_type || 'particles';
-      qrSize = curEv.qr_size || 200;
-      document.getElementById('ec').value = selC;
-      document.getElementById('ea').value = selA;
-      document.getElementById('eta').value = curEv.reveal_anim || 'glow';
-      document.getElementById('qr-size-range').value = qrSize;
-      document.getElementById('qr-size-val').textContent = qrSize + 'px';
-
-      document.querySelectorAll('.sw').forEach(s => { s.classList.toggle('on', s.dataset.c === selC); });
-      document.querySelectorAll('.ao').forEach(a => { a.classList.toggle('on', a.dataset.a === selA); });
-
-      bgD = curEv.bg_url; bgT = curEv.bg_type;
-      renderBgPrev();
-
-      curGs = await db.get('guests', `event_id=eq.${id}`);
-      renderGs();
-
-      mapTs = await db.get('table_layout', `event_id=eq.${id}`);
-      mapMarkers = await db.get('map_markers', `event_id=eq.${id}`);
-
-      gt(0);
-      document.getElementById('modal').classList.add('open');
-      setTimeout(() => { resizeM(); centerM(true); }, 100);
+    curEv = evs.find(e => e.id === id);
+    document.getElementById('mo-title').innerHTML = 'Editar <em>Evento</em>';
+    document.getElementById('en').value = curEv.name;
+    document.getElementById('ed').value = curEv.date;
+    document.getElementById('ev').value = curEv.venue;
+    document.getElementById('eh').value = curEv.host_name;
+    document.getElementById('ew').value = curEv.welcome_msg || '';
+    document.getElementById('et').value = curEv.type;
+    document.getElementById('eo').value = curEv.orientation || 'vertical';
+    document.getElementById('etn').value = curEv.tables_count || 20;
+    selC = curEv.accent_color || '#b8973a';
+    selA = curEv.animation_type || 'particles';
+    qrSize = curEv.qr_size || 200;
+    document.getElementById('ec').value = selC;
+    document.getElementById('ea').value = selA;
+    document.getElementById('eta').value = curEv.reveal_anim || 'glow';
+    document.getElementById('qr-size-range').value = qrSize;
+    document.getElementById('qr-size-val').textContent = qrSize + 'px';
+    
+    document.querySelectorAll('.sw').forEach(s => { s.classList.toggle('on', s.dataset.c === selC); });
+    document.querySelectorAll('.ao').forEach(a => { a.classList.toggle('on', a.dataset.a === selA); });
+    
+    bgD = curEv.bg_url; bgT = curEv.bg_type;
+    renderBgPrev();
+    
+    curGs = await db.get('guests', `event_id=eq.${id}`);
+    renderGs();
+    
+    mapTs = await db.get('table_layout', `event_id=eq.${id}`);
+    mapMarkers = await db.get('map_markers', `event_id=eq.${id}`);
+    
+    gt(0);
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => { resizeM(); centerM(true); }, 100);
     }
-
+    
     function gt(n) {
-      for (let i = 0; i < 5; i++) document.getElementById('t' + i).style.display = (i === n ? 'block' : 'none');
-      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('on', i === n));
+    for (let i = 0; i < 5; i++) document.getElementById('t' + i).style.display=(i===n ? 'block' : 'none' );
+      document.querySelectorAll('.tab').forEach((t, i)=> t.classList.toggle('on', i === n));
       ctab = n;
       if (n === 3) resizeM();
       if (n === 4) genQR();
-    }
-
-    function handleBg(input) {
+      }
+    
+      function handleBg(input) {
       const f = input.files; if (!f) return;
       bgT = f.type.startsWith('video') ? 'video' : 'image';
       const r = new FileReader();
       r.onload = e => { bgD = e.target.result; renderBgPrev(); };
       r.readAsDataURL(f);
-    }
-
-    function renderBgPrev() {
+      }
+    
+      function renderBgPrev() {
       const b = document.getElementById('bg-prev');
       if (!bgD) { b.innerHTML = ''; return; }
-      b.innerHTML = bgT === 'video' ? `<video src="${bgD}" muted autoplay loop style="width:100px;height:100px;object-fit:cover;"></video>` : `<img src="${bgD}" style="width:100px;height:100px;object-fit:cover;">`;
-    }
-
-    function pColor(el) {
-      document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
-      el.classList.add('on');
-      selC = el.dataset.c;
-      document.getElementById('ec').value = selC;
-    }
-    function sColor(v) { selC = v; document.getElementById('ec').value = v; document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); }
-    function pAnim(el) {
-      document.querySelectorAll('.ao').forEach(a => a.classList.remove('on'));
-      el.classList.add('on');
-      selA = el.dataset.a;
-      document.getElementById('ea').value = selA;
-    }
-
-    function addG() {
-      const n = document.getElementById('gn').value.trim(), t = document.getElementById('gnt').value;
-      if (!n || !t) return;
-      curGs.push({ id: 'temp-' + Date.now(), name: n, table_number: t });
-      document.getElementById('gn').value = ''; document.getElementById('gn').focus();
-      renderGs();
-    }
-    function delG(id) { curGs = curGs.filter(g => g.id !== id); renderGs(); }
-    function clearG() { if (confirm('¿Borrar todos?')) { curGs = []; renderGs(); } }
-    function renderGs() {
-      const b = document.getElementById('gtb');
-      b.innerHTML = '';
-      curGs.sort((a, b) => a.table_number - b.table_number).forEach((g, i) => {
-        b.innerHTML += `<tr><td>${i + 1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td style="text-align:right"><button class="btn bo bs" onclick="delG('${g.id}')">✕</button></td></tr>`;
+      b.innerHTML = bgT === 'video' ? `<video src="${bgD}" muted autoplay loop
+        style="width:100px;height:100px;object-fit:cover;"></video>` : `<img src="${bgD}" style="width:100px;height:100px;object-fit:cover;">`;
+        }
+    
+        function pColor(el) {
+          document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+          el.classList.add('on');
+          selC = el.dataset.c;
+          document.getElementById('ec').value = selC;
+        }
+        function sColor(v) { selC = v; document.getElementById('ec').value = v; document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); }
+        function pAnim(el) {
+          document.querySelectorAll('.ao').forEach(a => a.classList.remove('on'));
+          el.classList.add('on');
+          selA = el.dataset.a;
+          document.getElementById('ea').value = selA;
+        }
+    
+        function addG() {
+          const n = document.getElementById('gn').value.trim(), t = document.getElementById('gnt').value;
+          if (!n || !t) return;
+          curGs.push({ id: 'temp-' + Date.now(), name: n, table_number: t });
+          document.getElementById('gn').value = ''; document.getElementById('gn').focus();
+          renderGs();
+        }
+        function delG(id) { curGs = curGs.filter(g => g.id !== id); renderGs(); }
+        function clearG() { if (confirm('¿Borrar todos?')) { curGs = []; renderGs(); } }
+        function renderGs() {
+          const b = document.getElementById('gtb');
+          b.innerHTML = '';
+          curGs.sort((a, b) => a.table_number - b.table_number).forEach((g, i) => {
+            b.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td>${g.name}</td>
+        <td><span class="tb">${g.table_number}</span></td>
+        <td style="text-align:right"><button class="btn bo bs" onclick="delG('${g.id}')">✕</button></td>
+      </tr>`;
       });
       document.getElementById('gc').textContent = curGs.length + ' invitados';
-    }
-
-    function resizeM() {
+      }
+    
+      function resizeM() {
       const w = document.getElementById('mw');
       mW = w.clientWidth; mH = w.clientHeight;
       mc.width = mW; mc.height = mH;
       drawMap();
-    }
+      }
 
     // --- MEJORA: DIBUJO DE CUADRÍCULA ---
     function drawMap() {
