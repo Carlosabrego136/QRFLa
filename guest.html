@@ -882,8 +882,8 @@ function drawGuestMap(highlightN){
   function tx(x){return x*sc+offX;}
   function ty(y){return y*sc+offY;}
 
-  // Tamaño de mesa proporcional, legible
-  const r=Math.max(10,Math.min(22,sc*18));
+  // Tamaño de mesa proporcional, legible, con tope
+  const r=Math.min(Math.max(8,Math.min(18,sc*16)),22);
   const ac2=ev.color||'#b8973a';
 
   function drawFrame(pf){
@@ -903,7 +903,7 @@ function drawGuestMap(highlightN){
     markers.forEach(m=>{
       const x=tx(m.x), y=ty(m.y);
       const col=GM_COLORS[m.type]||'#888';
-      const mr=Math.max(16,r*1.3);
+      const mr=Math.min(Math.max(12,r*1.1),20); // tope para no agrandarse de más
       ctx2.save();
       ctx2.shadowBlur=14; ctx2.shadowColor=col+'88';
       ctx2.beginPath(); ctx2.arc(x,y,mr,0,Math.PI*2);
