@@ -618,39 +618,6 @@
       border: 1px solid var(--line);
       background: var(--paper);
       overflow: hidden;
-      transition: height 0.3s ease;
-    }
-
-    .map-wrap.expanded {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100vw;
-      height: 100vh !important;
-      z-index: 9999;
-      border: none;
-      background: var(--paper);
-    }
-
-    .map-expand-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid var(--line);
-      font-size: 0.72rem;
-      padding: 4px 9px;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-      color: var(--ink);
-    }
-
-    .map-expand-btn:hover {
-      background: var(--ink);
-      color: #fff;
     }
 
     #map-canvas {
@@ -1215,48 +1182,37 @@
 
         <!-- T3 MAPA -->
         <div id="t3" style="display:none">
-          <div id="map-view-bar"
-            style="display:none;align-items:center;gap:10px;padding:8px 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px;">
-            <span style="font-size:0.7rem;color:#dc2626;font-weight:500;">⚠ Vista del mapa guardado</span>
-            <span style="font-size:0.62rem;color:var(--gray);flex:1;">Si quieres editar las mesas oprime <strong>Auto</strong>, esto reordenará las mesas pero las etiquetas no.</span>
-            <button class="btn bi bs" onclick="enableMapEdit()">✏️ Editar mapa</button>
-          </div>
-          <div id="map-edit-controls" style="display:none">
-            <div class="map-tb">
-              <div class="shape-row" id="shape-row">
-                <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
-                <div class="shape-opt active" data-s="round" onclick="setShape(this,'round')">⭕ Redonda</div>
-                <div class="shape-opt" data-s="rect" onclick="setShape(this,'rect')">▬ Rect.</div>
-                <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
-                <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
-              </div>
-            </div>
-            <div class="map-tb">
-              <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
-              <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
-              <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
-              <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
-              <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
-              <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
-              <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
-            </div>
-            <div class="map-entry-row">
-              <label>Marcadores:</label>
-              <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
-              <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">🚶 Salida</div>
-              <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 Escenario</div>
-              <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 Barra</div>
-              <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 Pista</div>
-              <div class="entry-btn" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"
-                onclick="delSelMarker()">✕ Borrar</div>
-              <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
-              <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
+          <div class="map-tb">
+            <div class="shape-row" id="shape-row">
+              <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
+              <div class="shape-opt active" data-s="round" onclick="setShape(this,'round')">⭕ Redonda</div>
+              <div class="shape-opt" data-s="rect" onclick="setShape(this,'rect')">▬ Rect.</div>
+              <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
+              <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
             </div>
           </div>
-          <div class="map-wrap" id="mw">
-            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()">⤢ Expandir</button>
-            <canvas id="map-canvas"></canvas>
+          <div class="map-tb">
+            <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
+            <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
+            <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
+            <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
+            <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
+            <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
+            <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
           </div>
+          <div class="map-entry-row">
+            <label>Marcadores:</label>
+            <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
+            <div class="entry-btn" id="btn-exit" onclick="toggleEntryMode('exit')">🚶 Salida</div>
+            <div class="entry-btn" id="btn-stage" onclick="toggleEntryMode('stage')">🎤 Escenario</div>
+            <div class="entry-btn" id="btn-bar" onclick="toggleEntryMode('bar')">🍾 Barra</div>
+            <div class="entry-btn" id="btn-dance" onclick="toggleEntryMode('dance')">💃 Pista</div>
+            <div class="entry-btn" style="background:#fef2f2;border-color:#fecaca;color:#dc2626;"
+              onclick="delSelMarker()">✕ Borrar</div>
+            <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
+            <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
+          </div>
+          <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn bo" onclick="gt(2)">← Anterior</button>
             <button class="btn bi" onclick="gt(4)">Siguiente →</button>
@@ -1417,8 +1373,6 @@ async function editEv(id){
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
-  // Forzar x,y como números (Supabase a veces los devuelve como strings)
-  mapTs=mapTs.map(t=>({...t,x:parseFloat(t.x),y:parseFloat(t.y)}));
   // Load markers from event data (stored as JSON in map_markers column)
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
   selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
@@ -1443,11 +1397,14 @@ async function saveEv(){
   }
   if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
   if(mapTs.length&&eid){
+    // Normalizar coordenadas a espacio lógico antes de guardar
+    // Las coords en el canvas dependen de mScale/mPan, necesitamos las lógicas puras
+    // t.x y t.y ya son lógicas (se dividen por mScale al mover), guardarlas directo
     await db.post('table_layout',mapTs.map(t=>({
       event_id:eid,
       table_number:t.table_number,
-      x:parseFloat((+t.x).toFixed(4)),
-      y:parseFloat((+t.y).toFixed(4)),
+      x:parseFloat(t.x.toFixed(4)),
+      y:parseFloat(t.y.toFixed(4)),
       shape:t.shape||mShape,
       label:t.label||String(t.table_number)
     })));
@@ -1477,35 +1434,6 @@ function pColor(el){document.querySelectorAll('.sw').forEach(s=>s.classList.remo
 function sColor(c){selC=c;document.getElementById('ec').value=c;}
 function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
 
-function setMapEditMode(editing){
-  const viewBar=document.getElementById('map-view-bar');
-  const editControls=document.getElementById('map-edit-controls');
-  const canvas=document.getElementById('map-canvas');
-  if(viewBar) viewBar.style.display=editing?'none':'flex';
-  if(editControls) editControls.style.display=editing?'block':'none';
-  // Canvas: crosshair cuando edita, default cuando solo ve
-  if(canvas) canvas.style.cursor=editing?'crosshair':'default';
-  // Bloquear/desbloquear interacción del canvas
-  if(canvas) canvas.style.pointerEvents=editing?'auto':'none';
-}
-
-function enableMapEdit(){
-  setMapEditMode(true);
-  // Re-asegurar contexto del canvas por si initMap no terminó aún
-  if(!mctx){
-    mc=document.getElementById('map-canvas');
-    if(mc){
-      const w=document.getElementById('mw');
-      const rect=w.getBoundingClientRect();
-      mW=rect.width||w.offsetWidth||800;
-      mH=rect.height||w.offsetHeight||480;
-      mc.width=mW;mc.height=mH;
-      mctx=mc.getContext('2d');
-    }
-  }
-  drawMap();
-}
-
 function delSelMarker(){if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}else toast('Selecciona un marcador primero');}
 function editSelMarker(){if(selMarker===null){toast('Selecciona un marcador primero');return;}const m=mapMarkers[selMarker];const nl=prompt('Etiqueta del marcador:',m.customLabel||MARKER_LABELS[m.type]||'');if(nl!==null){m.customLabel=nl;drawMap();}}
 
@@ -1531,9 +1459,15 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
+  mW=w.clientWidth;mH=w.clientHeight;
+  mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
-
-  // Registrar eventos de input (solo una vez por instancia)
+  if(!mapTs.length&&curEv===null){
+    autoL();
+  } else {
+    // Siempre centrar — funciona tanto para mesas nuevas como cargadas de DB
+    setTimeout(()=>centerM(), 50); // pequeño delay para que mW/mH estén listos
+  }
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
@@ -1562,33 +1496,6 @@ function initMap(){
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
-
-  // Esperar dos frames para que el navegador pinte el tab antes de medir
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const rect=w.getBoundingClientRect();
-    mW=rect.width||w.offsetWidth||800;
-    mH=rect.height||w.offsetHeight||480;
-    mc.width=mW;mc.height=mH;
-    if(!mapTs.length&&curEv===null){
-      // Evento nuevo — auto layout y controles activos
-      setMapEditMode(true);
-      autoL();
-    } else if(curEv&&mapTs.length){
-      // Evento existente con mesas — mostrar tal como se guardó, en modo vista
-      // Forzar visibilidad del aviso antes del rAF por si había delay
-      const vb=document.getElementById('map-view-bar');
-      const ec=document.getElementById('map-edit-controls');
-      if(vb){vb.style.display='flex';}
-      if(ec){ec.style.display='none';}
-      const canvas=document.getElementById('map-canvas');
-      if(canvas){canvas.style.cursor='default';canvas.style.pointerEvents='none';}
-      centerM();
-    } else {
-      // Evento existente sin mesas aún — activar edición directo
-      setMapEditMode(true);
-      drawMap();
-    }
-  }));
 }
 
 let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
@@ -1778,29 +1685,6 @@ function autoL(){
   centerM(); // centrar siempre al auto-generar
 }
 
-function resizeMapCanvas(){
-  const w=document.getElementById('mw');
-  if(!w||!mc)return;
-  const rect=w.getBoundingClientRect();
-  mW=rect.width||w.offsetWidth||800;
-  mH=rect.height||w.offsetHeight||480;
-  mc.width=mW;mc.height=mH;
-  mctx=mc.getContext('2d');
-  drawMap();
-}
-
-let mapIsExpanded=false;
-function toggleMapExpand(){
-  const w=document.getElementById('mw');
-  const btn=document.getElementById('map-expand-btn');
-  mapIsExpanded=!mapIsExpanded;
-  w.classList.toggle('expanded', mapIsExpanded);
-  btn.textContent=mapIsExpanded?'✕ Cerrar':'⤢ Expandir';
-  // Bloquear scroll del body cuando está expandido
-  document.body.style.overflow=mapIsExpanded?'hidden':'';
-  setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 50);
-}
-
 function centerM(){
   if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
   const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
@@ -1821,7 +1705,6 @@ function centerM(){
 
 function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
 function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
-function zoomM(f){mScale=Math.max(0.15,Math.min(5,mScale*f));drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
 
 /* QR */
@@ -1892,10 +1775,7 @@ function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero')
 function openDispById(id){window.open(dURL(id),'_blank');}
 
 /* UI */
-function closeModal(){
-  if(mapIsExpanded)toggleMapExpand();
-  document.getElementById('modal').classList.remove('open');
-}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 loadDash();
