@@ -982,6 +982,57 @@
       color: var(--ink);
       min-width: 42px;
     }
+
+    /* MAP EXPANDED MODE */
+    .mo.map-expanded {
+      max-width: 98vw;
+      width: 98vw;
+      max-height: 98vh;
+    }
+
+    .mo.map-expanded .map-wrap {
+      height: calc(98vh - 320px);
+      min-height: 380px;
+    }
+
+    .map-expand-btn {
+      background: none;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      color: var(--gray);
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+      white-space: nowrap;
+    }
+
+    .map-expand-btn:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+    }
+
+    .map-auto-hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      font-size: 0.7rem;
+      color: #92400e;
+      line-height: 1.45;
+    }
+
+    .map-auto-hint-icon {
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
   </style>
 </head>
 
@@ -1182,6 +1233,10 @@
 
         <!-- T3 MAPA -->
         <div id="t3" style="display:none">
+          <div class="map-auto-hint">
+            <span class="map-auto-hint-icon">💡</span>
+            <span><strong>Tip:</strong> Si mueves o agregas mesas manualmente y necesitas reordenarlas, presiona <strong>⊞ Auto</strong> para redistribuirlas automáticamente. Usa <strong>⊡ Centrar</strong> para ajustar la vista después de mover elementos.</span>
+          </div>
           <div class="map-tb">
             <div class="shape-row" id="shape-row">
               <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
@@ -1190,6 +1245,7 @@
               <div class="shape-opt" data-s="oval" onclick="setShape(this,'oval')">⬭ Oval</div>
               <div class="shape-opt" data-s="square" onclick="setShape(this,'square')">▪ Cuadrada</div>
             </div>
+            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()" title="Expandir/contraer editor">⛶ Expandir</button>
           </div>
           <div class="map-tb">
             <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
@@ -1586,9 +1642,19 @@ function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(
 function drawMap(){
   if(!mctx)return;
   mctx.clearRect(0,0,mW,mH);
-  // Dot grid
-  mctx.fillStyle='rgba(0,0,0,0.05)';
-  for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
+  // Subtle line grid
+  const gStep=40;
+  mctx.save();
+  mctx.strokeStyle='rgba(0,0,0,0.07)';
+  mctx.lineWidth=0.5;
+  for(let x=0;x<mW;x+=gStep){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
+  for(let y=0;y<mH;y+=gStep){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
+  // Accent lines every 5 cells
+  mctx.strokeStyle='rgba(0,0,0,0.12)';
+  mctx.lineWidth=0.7;
+  for(let x=0;x<mW;x+=gStep*5){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
+  for(let y=0;y<mH;y+=gStep*5){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
+  mctx.restore();
   
   // Draw markers (large, visible icons)
   mapMarkers.forEach((m,mi)=>{
@@ -1706,6 +1772,20 @@ function centerM(){
 function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
 function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
+
+/* MAP EXPAND */
+function toggleMapExpand(){
+  const mo=document.querySelector('.mo');
+  const btn=document.getElementById('map-expand-btn');
+  const isExp=mo.classList.toggle('map-expanded');
+  btn.textContent=isExp?'⛶ Contraer':'⛶ Expandir';
+  setTimeout(()=>{
+    const mw=document.getElementById('mw');
+    mW=mw.offsetWidth; mH=mw.offsetHeight;
+    mc.width=mW; mc.height=mH;
+    drawMap();
+  },50);
+}
 
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
