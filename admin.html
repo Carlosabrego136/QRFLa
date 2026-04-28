@@ -1742,7 +1742,24 @@ function drawMap(){
   });
 }
 
+function ensureCanvas(){
+  const w=document.getElementById('mw');
+  if(!w)return false;
+  if(!mc)mc=document.getElementById('map-canvas');
+  if(!mc)return false;
+  const rect=w.getBoundingClientRect();
+  const rW=rect.width||w.offsetWidth||800;
+  const rH=rect.height||w.offsetHeight||480;
+  if(!mctx||mc.width!==rW||mc.height!==rH){
+    mW=rW;mH=rH;
+    mc.width=mW;mc.height=mH;
+    mctx=mc.getContext('2d');
+  }
+  return !!mctx;
+}
+
 function autoL(){
+  if(!ensureCanvas())return;
   const n=parseInt(document.getElementById('etn').value)||20;
 
   // Si ya hay mesas, conservar posiciones y solo agregar las que faltan
@@ -1753,7 +1770,7 @@ function autoL(){
 
     if(missing.length===0){
       // Todas ya existen — solo recentrar la vista
-      toast('\u2726 Mesas ya colocadas \u00b7 centrando vista');
+      toast('✦ Mesas ya colocadas · centrando vista');
       centerM();return;
     }
 
@@ -1769,7 +1786,7 @@ function autoL(){
       const c=i%cols, ro=Math.floor(i/cols);
       mapTs.push({table_number:tn,x:minX+c*cw+cw/2,y:maxY+120+ro*120,shape:mShape,label:String(tn)});
     });
-    toast('\u2726 '+missing.length+' mesa(s) nueva(s) agregada(s)');
+    toast('✦ '+missing.length+' mesa(s) nueva(s) agregada(s)');
     centerM();return;
   }
 
@@ -1785,14 +1802,7 @@ function autoL(){
 }
 
 function centerM(){
-  // If canvas not measured yet, wait one frame and retry
-  const w=document.getElementById('mw');
-  if(!mW||!mH||!mctx){
-    mW=w?w.offsetWidth:0; mH=w?w.offsetHeight:0;
-    if(!mW||!mH){requestAnimationFrame(centerM);return;}
-    if(mc){mc.width=mW;mc.height=mH;}
-    if(mc&&!mctx)mctx=mc.getContext('2d');
-  }
+  if(!ensureCanvas()){requestAnimationFrame(centerM);return;}
   if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
   const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
   const allY=[...mapTs.map(t=>t.y),...mapMarkers.map(m=>m.y)];
@@ -1809,8 +1819,8 @@ function centerM(){
   drawMap();
 }
 
-function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
-function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function zoomIn(){if(!ensureCanvas())return;mScale=Math.min(5,mScale*1.25);drawMap();}
+function zoomOut(){if(!ensureCanvas())return;mScale=Math.max(0.15,mScale*0.8);drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
 
 /* MAP EXPAND */
