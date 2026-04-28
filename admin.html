@@ -1383,7 +1383,7 @@
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
 const db={
-  async get(t,q=''){return(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();},
+  async get(t,q=''){const r=await(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();return Array.isArray(r)?r:[];},
   async post(t,d){return(await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
   async patch(t,id,d){return(await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
   async del(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});},
