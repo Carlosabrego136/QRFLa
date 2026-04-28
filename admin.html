@@ -1433,14 +1433,11 @@ async function saveEv(){
   }
   if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
   if(mapTs.length&&eid){
-    // Normalizar coordenadas a espacio lógico antes de guardar
-    // Las coords en el canvas dependen de mScale/mPan, necesitamos las lógicas puras
-    // t.x y t.y ya son lógicas (se dividen por mScale al mover), guardarlas directo
     await db.post('table_layout',mapTs.map(t=>({
       event_id:eid,
       table_number:t.table_number,
-      x:parseFloat(t.x.toFixed(4)),
-      y:parseFloat(t.y.toFixed(4)),
+      x:parseFloat((+t.x).toFixed(4)),
+      y:parseFloat((+t.y).toFixed(4)),
       shape:t.shape||mShape,
       label:t.label||String(t.table_number)
     })));
@@ -1495,20 +1492,9 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
-  // Usar getBoundingClientRect para dimensiones reales aunque el tab acabe de mostrarse
-  const rect=w.getBoundingClientRect();
-  mW=rect.width||w.offsetWidth||800;
-  mH=rect.height||w.offsetHeight||480;
-  mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
-  if(!mapTs.length&&curEv===null){
-    autoL();
-  } else {
-    drawMap();
-    // Centrar con dos intentos: inmediato y con delay por si el layout no terminó
-    centerM();
-    setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 80);
-  }
+
+  // Registrar eventos de input (solo una vez por instancia)
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
@@ -1537,6 +1523,19 @@ function initMap(){
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
+
+  // Esperar dos frames para que el navegador pinte el tab antes de medir
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const rect=w.getBoundingClientRect();
+    mW=rect.width||w.offsetWidth||800;
+    mH=rect.height||w.offsetHeight||480;
+    mc.width=mW;mc.height=mH;
+    if(!mapTs.length&&curEv===null){
+      autoL();
+    } else {
+      centerM();
+    }
+  }));
 }
 
 let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
@@ -1733,6 +1732,7 @@ function resizeMapCanvas(){
   mW=rect.width||w.offsetWidth||800;
   mH=rect.height||w.offsetHeight||480;
   mc.width=mW;mc.height=mH;
+  mctx=mc.getContext('2d');
   drawMap();
 }
 
