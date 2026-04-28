@@ -1094,7 +1094,6 @@
     </div>
   </main>
 
-  <!-- MODAL -->
   <div class="ov" id="modal">
     <div class="mo">
       <div class="mo-h">
@@ -1110,7 +1109,6 @@
       </div>
       <div class="mo-b">
 
-        <!-- T0 INFO -->
         <div id="t0">
           <div class="g2">
             <div class="fi"><label>Nombre del evento</label><input id="en" placeholder="Boda de Ana & Carlos"></div>
@@ -1136,7 +1134,6 @@
           </div>
         </div>
 
-        <!-- T1 PORTADA -->
         <div id="t1" style="display:none">
           <div class="fi">
             <label>Fondo (imagen o video)</label>
@@ -1178,7 +1175,6 @@
           </div>
         </div>
 
-        <!-- T2 INVITADOS -->
         <div id="t2" style="display:none">
           <div class="gr">
             <input id="gn" placeholder="Nombre del invitado" onkeydown="if(event.key==='Enter')addG()">
@@ -1213,7 +1209,6 @@
           </div>
         </div>
 
-        <!-- T3 MAPA -->
         <div id="t3" style="display:none">
           <div class="map-tb">
             <div class="shape-row" id="shape-row">
@@ -1227,7 +1222,7 @@
           <div class="map-tb">
             <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
             <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
-            <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
+            <button class="btn bo bs" onclick="centerM(true)">⊡ Centrar</button>
             <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
             <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
@@ -1255,18 +1250,13 @@
           </div>
         </div>
 
-        <!-- T4 QR -->
         <div id="t4" style="display:none">
-
-          <!-- PREVIEW DEL DISPLAY -->
           <div class="fi">
             <label>Vista previa de la pantalla</label>
             <div id="disp-preview-container">
-              <!-- se genera dinámicamente -->
             </div>
           </div>
 
-          <!-- TAMAÑO QR -->
           <div class="fi">
             <label>Tamaño del QR en pantalla</label>
             <div class="qr-size-row">
@@ -1275,7 +1265,6 @@
             </div>
           </div>
 
-          <!-- QR REAL -->
           <div class="qr-box">
             <p style="font-size:0.72rem;color:var(--gray);margin-bottom:10px;">URL para invitados:</p>
             <div class="qr-url" id="qu">—</div>
@@ -1299,557 +1288,585 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const SB='https://nhasvajymzawqykesaeg.supabase.co';
-const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
-const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
-const db={
-  async get(t,q=''){return(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();},
-  async post(t,d){return(await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
-  async patch(t,id,d){return(await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
-  async del(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});},
-  async dw(t,c,v){await fetch(`${SB}/rest/v1/${t}?${c}=eq.${v}`,{method:'DELETE',headers:H});}
-};
+    const SB = 'https://nhasvajymzawqykesaeg.supabase.co';
+    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
+    const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
-let evs=[],curEv=null,curGs=[],mapTs=[],bgD=null,bgT=null,selC='#b8973a',selA='particles';
-let ctab=0,mShape='round',mScale=1,mPan={x:0,y:0},selT=null,mDrag=null,mSx=0,mSy=0;
-let mc,mctx,mW,mH;
-let entryMode=null; // 'entry','exit','stage','bar','dance'
-let mapMarkers=[]; // {type, x, y, label}
-let qrSize=200;
+    const db = {
+      async get(t, q = '') { return (await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`, { headers: H })).json(); },
+      async post(t, d) { return (await fetch(`${SB}/rest/v1/${t}`, { method: 'POST', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) })).json(); },
+      async patch(t, id, d) { return (await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'PATCH', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) })).json(); },
+      async del(t, id) { await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'DELETE', headers: H }); },
+      async dw(t, c, v) { await fetch(`${SB}/rest/v1/${t}?${c}=eq.${v}`, { method: 'DELETE', headers: H }); }
+    };
 
-/* NAV */
-function nav(p,el){
-  document.querySelectorAll('.sb-i').forEach(i=>i.classList.remove('on'));
-  if(el)el.classList.add('on');
-  ['dashboard','events','qrs','guests'].forEach(x=>{const e=document.getElementById('p-'+x);if(e)e.style.display=x===p?'block':'none';});
-  const tts={dashboard:'Dashboard',events:'Eventos',qrs:'Códigos QR',guests:'Invitados'};
-  document.getElementById('ptitle').textContent=tts[p]||p;
-  if(p==='dashboard')loadDash();
-  if(p==='events')loadEvs();
-  if(p==='qrs')loadQRs();
-  if(p==='guests')loadGs();
-}
+    let evs = [], curEv = null, curGs = [], mapTs = [], bgD = null, bgT = null, selC = '#b8973a', selA = 'particles';
+    let ctab = 0, mShape = 'round', mScale = 1, mPan = { x: 0, y: 0 }, selT = null, mDrag = null, mSx = 0, mSy = 0;
+    let mc, mctx, mW, mH;
+    let entryMode = null;
+    let mapMarkers = [];
+    let qrSize = 200;
+    let selMarkerIdx = -1;
+    let mMarkerDrag = null;
 
-/* DASHBOARD */
-async function loadDash(){
-  evs=await db.get('events');
-  const gs=await db.get('guests');
-  const tl=await db.get('table_layout');
-  document.getElementById('s0').textContent=evs.length;
-  document.getElementById('s1').textContent=gs.length;
-  document.getElementById('s2').textContent=tl.length;
-  document.getElementById('s3').textContent=evs.length;
-  const r=document.getElementById('recent');
-  r.innerHTML=evs.length?'<div class="eg">'+evs.slice(0,6).map(eCard).join('')+'</div>':'<div class="empty"><div class="empty-i">◈</div>Sin eventos aún</div>';
-}
+    // --- NUEVAS CONSTANTES SISTEMA MAGNÉTICO ---
+    const GRID_SIZE = 40; // Tamaño de cada cuadro de la cuadrícula
 
-function eCard(e){return`<div class="ec"><span class="ec-tag">${e.type||'Evento'}</span><div class="ec-n">${e.name}</div><div class="ec-m">${e.date||''} · ${e.venue||''}</div><div class="ec-st"><span>${e.table_count||0} mesas</span><span>${e.host||''}</span></div><div class="ec-a"><button class="btn bo bs" onclick="editEv('${e.id}')">Editar</button><button class="btn bi bs" onclick="openDispById('${e.id}')">▶ Pantalla</button><button class="btn bd bs" onclick="delEv('${e.id}')">🗑</button></div></div>`;}
+    window.onload = () => { mc = document.getElementById('map-canvas'); mctx = mc.getContext('2d'); refresh(); initEvents(); };
 
-async function loadEvs(){evs=await db.get('events');document.getElementById('ev-grid').innerHTML=evs.length?evs.map(eCard).join(''):'<div class="empty"><div class="empty-i">◈</div>Sin eventos</div>';}
-
-async function loadQRs(){
-  evs=await db.get('events');
-  const g=document.getElementById('qr-grid');
-  if(!evs.length){g.innerHTML='<div class="empty">Sin eventos</div>';return;}
-  g.innerHTML=evs.map(e=>`<div class="ec"><div class="ec-tag">${e.type||'Evento'}</div><div class="ec-n">${e.name}</div><div id="mqr-${e.id}" style="margin:8px 0;display:inline-block;background:#fff;padding:5px;border:1px solid var(--line);"></div><br><div class="ec-a"><button class="btn bi bs" onclick="openDispById('${e.id}')">▶ Pantalla</button><button class="btn bo bs" onclick="cpURLById('${e.id}')">⧉ URL</button></div></div>`).join('');
-  evs.forEach(e=>{try{new QRCode(document.getElementById('mqr-'+e.id),{text:gURL(e.id),width:80,height:80,colorDark:'#0a0a0a',colorLight:'#ffffff'});}catch(x){}});
-}
-
-async function loadGs(){
-  const gs=await db.get('guests');evs=await db.get('events');
-  const el=document.getElementById('g-all');
-  if(!evs.length){el.innerHTML='<div class="empty">Sin datos</div>';return;}
-  const by={};gs.forEach(g=>{if(!by[g.event_id])by[g.event_id]=[];by[g.event_id].push(g);});
-  el.innerHTML=evs.map(e=>`<div style="background:#fff;border:1px solid var(--line);padding:16px;margin-bottom:12px;"><div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;margin-bottom:10px;">${e.name} <span style="font-size:0.65rem;font-family:'DM Sans',sans-serif;color:var(--gray);">${(by[e.id]||[]).length} invitados</span></div><table class="gt"><thead><tr><th>#</th><th>Nombre</th><th>Mesa</th></tr></thead><tbody>${(by[e.id]||[]).map((g,i)=>`<tr><td style="color:var(--gray)">${i+1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td></tr>`).join('')}</tbody></table></div>`).join('');
-}
-
-/* TABS */
-function gt(n){
-  ['t0','t1','t2','t3','t4'].forEach((t,i)=>document.getElementById(t).style.display=i===n?'block':'none');
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===n));
-  ctab=n;
-  if(n===3)initMap();
-  if(n===4)genQR();
-}
-
-/* OPEN/EDIT */
-function openNew(){
-  curEv=null;curGs=[];mapTs=[];mapMarkers=[];selMarker=null;bgD=null;bgT=null;
-  ['en','ed','ev','eh','ew'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('etn').value='20';
-  document.getElementById('eo').value='vertical';
-  document.getElementById('bg-prev').innerHTML='';
-  document.getElementById('mo-title').innerHTML='Nuevo <em>Evento</em>';
-  selC='#b8973a';selA='particles';
-  document.querySelectorAll('.ao').forEach(o=>o.classList.toggle('on',o.dataset.a==='particles'));
-  rGuests();gt(0);
-  document.getElementById('modal').classList.add('open');
-}
-
-async function editEv(id){
-  const r=await db.get('events',`id=eq.${id}`);
-  if(!r||!r[0])return;
-  curEv=r[0];
-  document.getElementById('en').value=curEv.name||'';
-  document.getElementById('et').value=curEv.type||'Boda';
-  document.getElementById('ed').value=curEv.date||'';
-  document.getElementById('ev').value=curEv.venue||'';
-  document.getElementById('eh').value=curEv.host||'';
-  document.getElementById('ew').value=curEv.welcome_msg||'';
-  document.getElementById('etn').value=curEv.table_count||20;
-  document.getElementById('eo').value=curEv.orientation||'vertical';
-  document.getElementById('eta').value=curEv.table_anim||'glow';
-  selC=curEv.color||'#b8973a';selA=curEv.animation||'particles';
-  document.getElementById('ec').value=selC;
-  document.getElementById('ea').value=selA;
-  document.querySelectorAll('.ao').forEach(o=>o.classList.toggle('on',o.dataset.a===selA));
-  bgD=curEv.bg_url||null;bgT=curEv.bg_type||null;
-  qrSize=curEv.qr_size||200;
-  document.getElementById('bg-prev').innerHTML=bgD?(bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`):'';
-  curGs=await db.get('guests',`event_id=eq.${id}`);
-  curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
-  mapTs=await db.get('table_layout',`event_id=eq.${id}`);
-  // Load markers from event data (stored as JSON in map_markers column)
-  mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
-  selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
-  rGuests();
-  document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
-  gt(0);document.getElementById('modal').classList.add('open');
-}
-
-/* SAVE */
-async function saveEv(){
-  const name=document.getElementById('en').value.trim();
-  if(!name){toast('Ingresa el nombre');gt(0);return;}
-  toast('Guardando...');
-  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers)};
-  let eid;
-  if(curEv){
-    await db.patch('events',curEv.id,data);eid=curEv.id;
-    await db.dw('guests','event_id',eid);
-    await db.dw('table_layout','event_id',eid);
-  } else {
-    const res=await db.post('events',data);eid=res[0]?.id;
-  }
-  if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
-  if(mapTs.length&&eid){
-    await db.post('table_layout',mapTs.map(t=>({
-      event_id:eid,
-      table_number:t.table_number,
-      x:parseFloat((+t.x).toFixed(4)),
-      y:parseFloat((+t.y).toFixed(4)),
-      shape:t.shape||mShape,
-      label:t.label||String(t.table_number)
-    })));
-  }
-  closeModal();toast('✦ Evento guardado');loadDash();
-}
-
-async function delEv(id){
-  if(!confirm('¿Eliminar evento?'))return;
-  await db.dw('guests','event_id',id);
-  await db.dw('table_layout','event_id',id);
-  await db.del('events',id);
-  toast('Eliminado');loadDash();
-}
-
-/* GUESTS */
-function addG(){const n=document.getElementById('gn').value.trim();const t=parseInt(document.getElementById('gnt').value);if(!n||isNaN(t))return;curGs.push({name:n,table_number:t});document.getElementById('gn').value='';document.getElementById('gnt').value='';rGuests();document.getElementById('gn').focus();}
-function removeG(i){curGs.splice(i,1);rGuests();}
-function clearG(){if(confirm('¿Limpiar?')){curGs=[];rGuests();}}
-function rGuests(){const tb=document.getElementById('gtb');tb.innerHTML=curGs.length?curGs.map((g,i)=>`<tr><td style="color:var(--gray)">${i+1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td><button onclick="removeG(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.72rem;">✕</button></td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--gray);padding:14px;font-size:0.72rem;">Sin invitados</td></tr>';document.getElementById('gc').textContent=curGs.length+' invitados';}
-function impCSV(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{let a=0;e.target.result.split('\n').filter(l=>l.trim()).forEach(l=>{const p=l.split(',');if(p.length>=2){const n=p[0].trim(),t=parseInt(p[1]);if(n&&!isNaN(t)){curGs.push({name:n,table_number:t});a++;}}});rGuests();toast(`${a} invitados importados`);};r.readAsText(f);}
-function dlTpl(){const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('Nombre,Mesa\nJuan Pérez,5\nMaría García,3');a.download='plantilla.csv';a.click();}
-
-/* BG */
-function handleBg(inp){const f=inp.files[0];if(!f)return;bgT=f.type.includes('video')?'video':'image';const r=new FileReader();r.onload=e=>{bgD=e.target.result;document.getElementById('bg-prev').innerHTML=bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`;};r.readAsDataURL(f);}
-function pColor(el){document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));el.classList.add('on');sColor(el.dataset.c);}
-function sColor(c){selC=c;document.getElementById('ec').value=c;}
-function pAnim(el){document.querySelectorAll('.ao').forEach(o=>o.classList.remove('on'));el.classList.add('on');selA=el.dataset.a;document.getElementById('ea').value=selA;}
-
-function delSelMarker(){if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}else toast('Selecciona un marcador primero');}
-function editSelMarker(){if(selMarker===null){toast('Selecciona un marcador primero');return;}const m=mapMarkers[selMarker];const nl=prompt('Etiqueta del marcador:',m.customLabel||MARKER_LABELS[m.type]||'');if(nl!==null){m.customLabel=nl;drawMap();}}
-
-/* MAP EDITOR */
-function setShape(el, s) {
-  document.querySelectorAll('.shape-opt').forEach(o=>o.classList.remove('active'));
-  el.classList.add('active'); mShape=s; drawMap();
-}
-
-function toggleEntryMode(type) {
-  if(entryMode===type){ entryMode=null; } else { entryMode=type; }
-  ['entry','exit','stage','bar','dance'].forEach(t=>{
-    const b=document.getElementById('btn-'+t);
-    if(b) b.classList.toggle('active', entryMode===t);
-  });
-}
-
-const MARKER_ICONS={entry:'🚪',exit:'🚶',stage:'🎤',bar:'🍾',dance:'💃'};
-const MARKER_LABELS={entry:'Entrada',exit:'Salida',stage:'Escenario',bar:'Barra',dance:'Pista'};
-const MARKER_COLORS={entry:'#22c55e',exit:'#f59e0b',stage:'#8b5cf6',bar:'#ec4899',dance:'#3b82f6'};
-let selMarker=null;
-
-function initMap(){
-  const w=document.getElementById('mw');
-  mc=document.getElementById('map-canvas');
-  mctx=mc.getContext('2d');
-
-  // Registrar eventos de input (solo una vez por instancia)
-  mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
-  mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
-  mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
-    mDownX=mx;mDownY=my;mDownMoved=false;
-    const hm=hitMarker(mx,my);
-    if(hm!==-1){mMarkerDrag=mapMarkers[hm];selMarker=hm;mMarkerSx=mx-mapMarkers[hm].x*mScale;mMarkerSy=my-mapMarkers[hm].y*mScale;drawMap();return;}
-    const hit=mapTs.find(t=>hitT(t,mx,my));
-    if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
-    drawMap();};
-  mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
-    if(Math.hypot(mx-mDownX,my-mDownY)>5)mDownMoved=true;
-    if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
-    if(mDrag){mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();}};
-  mc.ontouchend=e=>{
-    if(entryMode&&!mDownMoved&&mMarkerDrag===null){
-      const r=mc.getBoundingClientRect();
-      const t=e.changedTouches[0];
-      const mx=t.clientX-r.left,my=t.clientY-r.top;
-      const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
-      mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
-      selMarker=mapMarkers.length-1;drawMap();
+    function nav(p, el) {
+      ['dashboard', 'events', 'qrs', 'guests'].forEach(id => document.getElementById('p-' + id).style.display = 'none');
+      document.getElementById('p-' + p).style.display = 'block';
+      document.querySelectorAll('.sb-i').forEach(i => i.classList.remove('on'));
+      el.classList.add('on');
+      document.getElementById('ptitle').textContent = p.charAt(0).toUpperCase() + p.slice(1);
     }
-    mDrag=null;mMarkerDrag=null;};
-  document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&document.getElementById('modal').classList.contains('open')){
-    if(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')return;
-    if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
-    else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
-  }});
 
-  // Esperar dos frames para que el navegador pinte el tab antes de medir
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const rect=w.getBoundingClientRect();
-    mW=rect.width||w.offsetWidth||800;
-    mH=rect.height||w.offsetHeight||480;
-    mc.width=mW;mc.height=mH;
-    if(!mapTs.length&&curEv===null){
-      autoL();
-    } else {
+    async function refresh() {
+      evs = await db.get('events');
+      const r = document.getElementById('recent');
+      r.innerHTML = evs.length ? '' : '<div class="empty"><div class="empty-i">✦</div>Aún no tienes eventos creados</div>';
+      evs.slice(0, 4).forEach(e => r.innerHTML += card(e));
+      const g = document.getElementById('ev-grid');
+      g.innerHTML = '';
+      evs.forEach(e => g.innerHTML += card(e));
+      const q = document.getElementById('qr-grid');
+      q.innerHTML = '';
+      evs.forEach(e => q.innerHTML += qrcard(e));
+      loadGs();
+      updateStats();
+    }
+
+    function card(e) {
+      return `
+    <div class="ec" onclick="editEv('${e.id}')">
+      <div class="ec-tag">${e.type}</div>
+      <div class="ec-n">${e.name}</div>
+      <div class="ec-m">${e.venue} · ${e.date}</div>
+      <div class="ec-st"><span>MesaQR System</span><span>ID: ${e.id.split('-')}</span></div>
+    </div>`;
+    }
+    function qrcard(e) {
+      return `
+    <div class="ec" style="text-align:center" onclick="openDispById('${e.id}')">
+      <div class="ec-n">${e.name}</div>
+      <div class="ec-m">Toca para abrir pantalla</div>
+      <button class="btn bo bs" onclick="event.stopPropagation();cpURLById('${e.id}')">Copiar Link</button>
+    </div>`;
+    }
+
+    function updateStats() {
+      document.getElementById('s0').textContent = evs.length;
+      let totalG = 0, totalM = 0;
+      evs.forEach(e => { totalG += (e.guests_count || 0); totalM += (e.tables_count || 0); });
+      document.getElementById('s1').textContent = totalG;
+      document.getElementById('s2').textContent = totalM;
+      document.getElementById('s3').textContent = evs.length;
+    }
+
+    async function loadGs() {
+      const all = await db.get('guests');
+      const container = document.getElementById('g-all');
+      if (!all.length) { container.innerHTML = '<div class="empty">No hay invitados registrados</div>'; return; }
+      let h = '<table class="gt"><thead><tr><th>Nombre</th><th>Mesa</th><th>Evento</th></tr></thead><tbody>';
+      all.forEach(g => {
+        const ev = evs.find(e => e.id === g.event_id);
+        h += `<tr><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td>${ev ? ev.name : '—'}</td></tr>`;
+      });
+      h += '</tbody></table>';
+      container.innerHTML = h;
+    }
+
+    function openNew() {
+      curEv = null; curGs = []; mapTs = []; mapMarkers = []; bgD = null; bgT = null; selC = '#b8973a'; selA = 'particles'; qrSize = 200;
+      document.getElementById('mo-title').innerHTML = 'Nuevo <em>Evento</em>';
+      ['en', 'ed', 'ev', 'eh', 'ew', 'mtn'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('et').value = 'Boda';
+      document.getElementById('eo').value = 'vertical';
+      document.getElementById('etn').value = '20';
+      document.getElementById('bg-prev').innerHTML = '';
+      document.getElementById('qu').textContent = '—';
+      document.getElementById('qrcode').innerHTML = '';
+      pColor(document.querySelector('.sw'));
+      pAnim(document.querySelector('.ao'));
+      renderGs();
+      gt(0);
+      document.getElementById('modal').classList.add('open');
+      setTimeout(resizeM, 100);
+    }
+
+    async function editEv(id) {
+      curEv = evs.find(e => e.id === id);
+      document.getElementById('mo-title').innerHTML = 'Editar <em>Evento</em>';
+      document.getElementById('en').value = curEv.name;
+      document.getElementById('ed').value = curEv.date;
+      document.getElementById('ev').value = curEv.venue;
+      document.getElementById('eh').value = curEv.host_name;
+      document.getElementById('ew').value = curEv.welcome_msg || '';
+      document.getElementById('et').value = curEv.type;
+      document.getElementById('eo').value = curEv.orientation || 'vertical';
+      document.getElementById('etn').value = curEv.tables_count || 20;
+      selC = curEv.accent_color || '#b8973a';
+      selA = curEv.animation_type || 'particles';
+      qrSize = curEv.qr_size || 200;
+      document.getElementById('ec').value = selC;
+      document.getElementById('ea').value = selA;
+      document.getElementById('eta').value = curEv.reveal_anim || 'glow';
+      document.getElementById('qr-size-range').value = qrSize;
+      document.getElementById('qr-size-val').textContent = qrSize + 'px';
+
+      document.querySelectorAll('.sw').forEach(s => { s.classList.toggle('on', s.dataset.c === selC); });
+      document.querySelectorAll('.ao').forEach(a => { a.classList.toggle('on', a.dataset.a === selA); });
+
+      bgD = curEv.bg_url; bgT = curEv.bg_type;
+      renderBgPrev();
+
+      curGs = await db.get('guests', `event_id=eq.${id}`);
+      renderGs();
+
+      mapTs = await db.get('table_layout', `event_id=eq.${id}`);
+      mapMarkers = await db.get('map_markers', `event_id=eq.${id}`);
+
+      gt(0);
+      document.getElementById('modal').classList.add('open');
+      setTimeout(() => { resizeM(); centerM(true); }, 100);
+    }
+
+    function gt(n) {
+      for (let i = 0; i < 5; i++) document.getElementById('t' + i).style.display = (i === n ? 'block' : 'none');
+      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('on', i === n));
+      ctab = n;
+      if (n === 3) resizeM();
+      if (n === 4) genQR();
+    }
+
+    function handleBg(input) {
+      const f = input.files; if (!f) return;
+      bgT = f.type.startsWith('video') ? 'video' : 'image';
+      const r = new FileReader();
+      r.onload = e => { bgD = e.target.result; renderBgPrev(); };
+      r.readAsDataURL(f);
+    }
+
+    function renderBgPrev() {
+      const b = document.getElementById('bg-prev');
+      if (!bgD) { b.innerHTML = ''; return; }
+      b.innerHTML = bgT === 'video' ? `<video src="${bgD}" muted autoplay loop style="width:100px;height:100px;object-fit:cover;"></video>` : `<img src="${bgD}" style="width:100px;height:100px;object-fit:cover;">`;
+    }
+
+    function pColor(el) {
+      document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+      el.classList.add('on');
+      selC = el.dataset.c;
+      document.getElementById('ec').value = selC;
+    }
+    function sColor(v) { selC = v; document.getElementById('ec').value = v; document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); }
+    function pAnim(el) {
+      document.querySelectorAll('.ao').forEach(a => a.classList.remove('on'));
+      el.classList.add('on');
+      selA = el.dataset.a;
+      document.getElementById('ea').value = selA;
+    }
+
+    function addG() {
+      const n = document.getElementById('gn').value.trim(), t = document.getElementById('gnt').value;
+      if (!n || !t) return;
+      curGs.push({ id: 'temp-' + Date.now(), name: n, table_number: t });
+      document.getElementById('gn').value = ''; document.getElementById('gn').focus();
+      renderGs();
+    }
+    function delG(id) { curGs = curGs.filter(g => g.id !== id); renderGs(); }
+    function clearG() { if (confirm('¿Borrar todos?')) { curGs = []; renderGs(); } }
+    function renderGs() {
+      const b = document.getElementById('gtb');
+      b.innerHTML = '';
+      curGs.sort((a, b) => a.table_number - b.table_number).forEach((g, i) => {
+        b.innerHTML += `<tr><td>${i + 1}</td><td>${g.name}</td><td><span class="tb">${g.table_number}</span></td><td style="text-align:right"><button class="btn bo bs" onclick="delG('${g.id}')">✕</button></td></tr>`;
+      });
+      document.getElementById('gc').textContent = curGs.length + ' invitados';
+    }
+
+    function resizeM() {
+      const w = document.getElementById('mw');
+      mW = w.clientWidth; mH = w.clientHeight;
+      mc.width = mW; mc.height = mH;
+      drawMap();
+    }
+
+    // --- MEJORA: DIBUJO DE CUADRÍCULA ---
+    function drawMap() {
+      if (!mctx) return;
+      mctx.clearRect(0, 0, mW, mH);
+      mctx.save();
+      mctx.translate(mPan.x, mPan.y);
+      mctx.scale(mScale, mScale);
+
+      // Dibujar Cuadrícula de referencia
+      mctx.beginPath();
+      mctx.strokeStyle = 'rgba(0,0,0,0.05)';
+      mctx.lineWidth = 1 / mScale;
+      
+      // Dibujamos un área grande para la cuadrícula
+      const range = 3000; 
+      for (let x = -range; x <= range; x += GRID_SIZE) {
+        mctx.moveTo(x, -range);
+        mctx.lineTo(x, range);
+      }
+      for (let y = -range; y <= range; y += GRID_SIZE) {
+        mctx.moveTo(-range, y);
+        mctx.lineTo(range, y);
+      }
+      mctx.stroke();
+
+      mapTs.forEach(t => drawT(t));
+      mapMarkers.forEach((m, i) => drawMarker(m, i === selMarkerIdx));
+      mctx.restore();
+    }
+
+    function drawT(t) {
+      const isSel = selT === t;
+      mctx.fillStyle = isSel ? selC : '#fff';
+      mctx.strokeStyle = isSel ? '#000' : '#ddd';
+      mctx.lineWidth = 2 / mScale;
+      
+      // Ajustamos el tamaño visual para que encaje bien en los cuadros de 40px
+      const size = GRID_SIZE - 4; 
+
+      if (t.shape === 'round') {
+        mctx.beginPath(); mctx.arc(t.x, t.y, size/2, 0, 7); mctx.fill(); mctx.stroke();
+      } else if (t.shape === 'rect') {
+        mctx.fillRect(t.x - size, t.y - size/2, size*2, size); mctx.strokeRect(t.x - size, t.y - size/2, size*2, size);
+      } else if (t.shape === 'oval') {
+        mctx.beginPath(); mctx.ellipse(t.x, t.y, size, size/2, 0, 0, 7); mctx.fill(); mctx.stroke();
+      } else {
+        mctx.fillRect(t.x - size/2, t.y - size/2, size, size); mctx.strokeRect(t.x - size/2, t.y - size/2, size, size);
+      }
+      mctx.fillStyle = isSel ? '#fff' : '#000';
+      mctx.font = `600 ${11 / mScale}px DM Sans`;
+      mctx.textAlign = 'center'; mctx.textBaseline = 'middle';
+      mctx.fillText(t.table_number, t.x, t.y);
+    }
+
+    function drawMarker(m, isSel) {
+      const size = 16 / mScale;
+      mctx.save();
+      mctx.translate(m.x, m.y);
+      mctx.fillStyle = isSel ? '#000' : '#888';
+      mctx.beginPath(); mctx.arc(0, 0, 4 / mScale, 0, 7); mctx.fill();
+      mctx.font = `${10 / mScale}px DM Sans`;
+      mctx.textAlign = 'center';
+      let icon = '';
+      if (m.type === 'entry') icon = '🚪 ';
+      if (m.type === 'exit') icon = '🚶 ';
+      if (m.type === 'stage') icon = '🎤 ';
+      if (m.type === 'bar') icon = '🍾 ';
+      if (m.type === 'dance') icon = '💃 ';
+      mctx.fillText(icon + (m.label || ''), 0, -10 / mScale);
+      if (isSel) {
+        mctx.strokeStyle = selC; mctx.lineWidth = 1 / mScale;
+        mctx.strokeRect(-20 / mScale, -20 / mScale, 40 / mScale, 40 / mScale);
+      }
+      mctx.restore();
+    }
+
+    function initEvents() {
+      mc.onmousedown = e => {
+        const rect = mc.getBoundingClientRect();
+        const x = (e.clientX - rect.left - mPan.x) / mScale;
+        const y = (e.clientY - rect.top - mPan.y) / mScale;
+
+        // Buscar marcador
+        selMarkerIdx = mapMarkers.findIndex(m => Math.hypot(m.x - x, m.y - y) < 20 / mScale);
+        if (selMarkerIdx !== -1) {
+          mMarkerDrag = mapMarkers[selMarkerIdx];
+          entryMode = null; updateMarkerBtns();
+          drawMap(); return;
+        }
+
+        // Buscar mesa
+        selT = mapTs.find(t => Math.hypot(t.x - x, t.y - y) < 25 / mScale);
+        if (selT) { mDrag = selT; drawMap(); return; }
+
+        if (entryMode) {
+          // Agregar marcador con imán
+          mapMarkers.push({ 
+            type: entryMode, 
+            x: Math.round(x / GRID_SIZE) * GRID_SIZE, 
+            y: Math.round(y / GRID_SIZE) * GRID_SIZE, 
+            label: entryMode.toUpperCase() 
+          });
+          drawMap(); return;
+        }
+
+        // Agregar mesa con imán
+        const n = document.getElementById('mtn').value;
+        mapTs.push({ 
+          table_number: n || (mapTs.length + 1), 
+          x: Math.round(x / GRID_SIZE) * GRID_SIZE, 
+          y: Math.round(y / GRID_SIZE) * GRID_SIZE, 
+          shape: mShape 
+        });
+        document.getElementById('mtn').value = '';
+        drawMap();
+      };
+
+      mc.onmousemove = e => {
+        const rect = mc.getBoundingClientRect();
+        if (mDrag) {
+          const x = (e.clientX - rect.left - mPan.x) / mScale;
+          const y = (e.clientY - rect.top - mPan.y) / mScale;
+          // Efecto Imán
+          mDrag.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+          mDrag.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+          drawMap();
+        } else if (mMarkerDrag) {
+          const x = (e.clientX - rect.left - mPan.x) / mScale;
+          const y = (e.clientY - rect.top - mPan.y) / mScale;
+          // Efecto Imán
+          mMarkerDrag.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
+          mMarkerDrag.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
+          drawMap();
+        } else if (e.buttons === 1) {
+          mPan.x += e.movementX; mPan.y += e.movementY; drawMap();
+        }
+      };
+
+      window.onmouseup = () => { mDrag = null; mMarkerDrag = null; };
+      mc.onwheel = e => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const next = mScale * delta;
+        if (next > 0.1 && next < 5) {
+          const rect = mc.getBoundingClientRect();
+          const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+          mPan.x = mx - (mx - mPan.x) * delta;
+          mPan.y = my - (my - mPan.y) * delta;
+          mScale = next; drawMap();
+        }
+      };
+      window.onkeydown = e => {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          if (selT) { mapTs = mapTs.filter(t => t !== selT); selT = null; drawMap(); }
+          if (selMarkerIdx !== -1) { mapMarkers.splice(selMarkerIdx, 1); selMarkerIdx = -1; drawMap(); }
+        }
+      };
+      mc.ondblclick = e => {
+        const rect = mc.getBoundingClientRect();
+        const x = (e.clientX - rect.left - mPan.x) / mScale;
+        const y = (e.clientY - rect.top - mPan.y) / mScale;
+        const m = mapMarkers.find(m => Math.hypot(m.x - x, m.y - y) < 20 / mScale);
+        if (m) { const l = prompt('Etiqueta:', m.label); if (l !== null) m.label = l; drawMap(); }
+      };
+    }
+
+    function setShape(el, s) {
+      mShape = s; document.querySelectorAll('.shape-opt').forEach(o => o.classList.remove('active')); el.classList.add('active');
+    }
+    function zoomIn() { mScale *= 1.2; drawMap(); }
+    function zoomOut() { mScale *= 0.8; drawMap(); }
+
+    // --- MEJORA: CENTRADO INTELIGENTE ---
+    function centerM(keepZoom = false) {
+      if (!mapTs.length && !mapMarkers.length) {
+        mPan = { x: mW / 2, y: mH / 2 };
+        if (!keepZoom) mScale = 1;
+        drawMap(); return;
+      }
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      [...mapTs, ...mapMarkers].forEach(p => {
+        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+      });
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      
+      if (!keepZoom) {
+        const w = maxX - minX + 200, h = maxY - minY + 200;
+        mScale = Math.min(mW / w, mH / h, 1.2);
+      }
+      
+      mPan.x = mW / 2 - cx * mScale;
+      mPan.y = mH / 2 - cy * mScale;
+      drawMap();
+    }
+
+    function clearM() { if (confirm('¿Limpiar mapa?')) { mapTs = []; mapMarkers = []; drawMap(); } }
+    function autoL() {
+      const n = parseInt(document.getElementById('etn').value) || 20;
+      mapTs = [];
+      const cols = Math.ceil(Math.sqrt(n * 1.5));
+      for (let i = 0; i < n; i++) {
+        const r = Math.floor(i / cols), c = i % cols;
+        mapTs.push({ 
+          table_number: i + 1, 
+          x: (c + 1) * (GRID_SIZE * 2), 
+          y: (r + 1) * (GRID_SIZE * 2), 
+          shape: mShape 
+        });
+      }
       centerM();
     }
-  }));
-}
 
-let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
-
-function mdStart(e){
-  const{mx,my}=mc2(e);
-  mDownX=mx;mDownY=my;mDownMoved=false;
-
-  // Check if clicking delete X of selected marker first
-  if(selMarker!==null){
-    const m=mapMarkers[selMarker];
-    const r=Math.max(26,32*mScale);
-    const mx2=m.x*mScale+mPan.x+r-4, my2=m.y*mScale+mPan.y-r+4;
-    const xr=Math.max(8,10*mScale);
-    if(Math.hypot(mx-mx2,my-my2)<=xr){
-      mapMarkers.splice(selMarker,1);selMarker=null;drawMap();return;
+    function toggleEntryMode(type) {
+      if (entryMode === type) entryMode = null; else entryMode = type;
+      updateMarkerBtns();
     }
-  }
-
-  // Check if hitting an existing marker — allow dragging it
-  const hm=hitMarker(mx,my);
-  if(hm!==-1){
-    mMarkerDrag=mapMarkers[hm];
-    selMarker=hm;
-    mMarkerSx=mx-mapMarkers[hm].x*mScale;
-    mMarkerSy=my-mapMarkers[hm].y*mScale;
-    drawMap();return;
-  }
-
-  selMarker=null;
-  // Check if hitting a table — allow dragging it regardless of entryMode
-  const hit=mapTs.find(t=>hitT(t,mx,my));
-  if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
-
-  // If entryMode active and no marker/table hit, we'll place new marker on mouseup (if not dragged)
-  if(entryMode){ selT=null; drawMap(); return; }
-
-  // No entryMode — place new table
-  selT=null;
-  const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
-  // Coordenada lógica = (pixel - pan) / scale
-  const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
-  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
-  document.getElementById('mtn').value=tn+1;
-  drawMap();
-}
-function hitMarker(mx,my){
-  for(let i=0;i<mapMarkers.length;i++){
-    const m=mapMarkers[i];
-    const x=m.x*mScale+mPan.x,y=m.y*mScale+mPan.y;
-    const r=Math.max(26,32*mScale);
-    if(Math.hypot(mx-x,my-y)<=r)return i;
-  }
-  return -1;
-}
-
-function mdMove(e){
-  const{mx,my}=mc2(e);
-  if(Math.hypot(mx-mDownX,my-mDownY)>5) mDownMoved=true;
-  if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
-  if(!mDrag)return;
-  mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();
-}
-function mdUp(e){
-  const{mx,my}=mc2(e);
-  // Place new marker only if entryMode active and didn't drag and didn't hit existing marker
-  if(entryMode&&!mDownMoved&&mMarkerDrag===null){
-    const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
-    mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
-    selMarker=mapMarkers.length-1;
-    drawMap();
-  }
-  // Handle marker click (select / double-select to edit)
-  if(!mDownMoved&&mMarkerDrag!==null){
-    const mi=mapMarkers.indexOf(mMarkerDrag);
-    if(selMarker===mi&&mi!==-1){
-      const newLabel=prompt('Etiqueta del marcador:',mMarkerDrag.customLabel||MARKER_LABELS[mMarkerDrag.type]||'');
-      if(newLabel!==null)mMarkerDrag.customLabel=newLabel;
+    function updateMarkerBtns() {
+      document.querySelectorAll('.entry-btn').forEach(b => b.classList.remove('active'));
+      if (entryMode) {
+        const id = 'btn-' + entryMode;
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+      }
     }
-  }
-  mDrag=null;mMarkerDrag=null;
-}
-function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
-function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);
-  if(t.shape==='rect'||t.shape==='square') return mx>=x-r*1.4&&mx<=x+r*1.4&&my>=y-r*.75&&my<=y+r*.75;
-  return Math.hypot(mx-x,my-y)<=r;}
+    function delSelMarker() { if (selMarkerIdx !== -1) { mapMarkers.splice(selMarkerIdx, 1); selMarkerIdx = -1; drawMap(); } }
+    function editSelMarker() { if (selMarkerIdx !== -1) { const m = mapMarkers[selMarkerIdx]; const l = prompt('Etiqueta:', m.label); if (l !== null) m.label = l; drawMap(); } }
 
-function drawMap(){
-  if(!mctx)return;
-  mctx.clearRect(0,0,mW,mH);
-  // Dot grid
-  mctx.fillStyle='rgba(0,0,0,0.05)';
-  for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
-  
-  // Draw markers (large, visible icons)
-  mapMarkers.forEach((m,mi)=>{
-    const x=m.x*mScale+mPan.x, y=m.y*mScale+mPan.y;
-    const col=MARKER_COLORS[m.type]||'#888';
-    const r=Math.max(26,32*mScale);
-    const isSel=selMarker===mi;
-    mctx.save();
-    // Glow for selected
-    if(isSel){mctx.shadowBlur=20;mctx.shadowColor=col;}
-    // Background circle
-    mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2);
-    mctx.fillStyle=col+(isSel?'cc':'55'); mctx.fill();
-    mctx.strokeStyle=col; mctx.lineWidth=isSel?3:2;
-    mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2); mctx.stroke();
-    mctx.shadowBlur=0;
-    // Emoji icon — large and visible
-    const emojiSize=Math.max(18,22*mScale);
-    mctx.font=`${emojiSize}px serif`;
-    mctx.textAlign='center'; mctx.textBaseline='middle';
-    mctx.fillText(MARKER_ICONS[m.type]||'📍',x,y);
-    // Label below
-    const labelY=y+r+Math.max(10,13*mScale);
-    const labelH=Math.max(14,16*mScale);
-    mctx.font=`bold ${Math.max(9,11*mScale)}px 'DM Sans',sans-serif`;
-    mctx.textAlign='center';
-    mctx.textBaseline='middle';
-    // Background for label
-    const lw=mctx.measureText(m.customLabel||MARKER_LABELS[m.type]||m.type).width+8;
-    mctx.fillStyle='rgba(0,0,0,0.65)';
-    mctx.fillRect(x-lw/2,labelY-labelH/2,lw,labelH);
-    mctx.fillStyle='#fff';
-    mctx.fillText(m.customLabel||MARKER_LABELS[m.type]||m.type,x,labelY);
-    // Delete X if selected
-    if(isSel){
-      mctx.font=`bold ${Math.max(10,12*mScale)}px sans-serif`;
-      mctx.fillStyle='#fff';
-      mctx.textBaseline='middle';
-      const xbx=x+r-4,xby=y-r+4;
-      mctx.beginPath();mctx.arc(xbx,xby,Math.max(8,10*mScale),0,Math.PI*2);
-      mctx.fillStyle='#dc2626';mctx.fill();
-      mctx.fillStyle='#fff';mctx.fillText('✕',xbx,xby);
+    function toggleMapExpand() {
+      const w = document.getElementById('mw');
+      const b = document.getElementById('map-expand-btn');
+      const isExp = w.classList.toggle('expanded');
+      b.textContent = isExp ? '✕ Cerrar' : '⤢ Expandir';
+      setTimeout(resizeM, 300);
     }
-    mctx.restore();
-  });
 
-  // Draw tables
-  mapTs.forEach(t=>{
-    const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale),isSel=selT===t;
-    mctx.save();
-    if(isSel){mctx.shadowBlur=14;mctx.shadowColor='rgba(184,151,58,0.5)';}
-    const shape=t.shape||mShape;
-    if(shape==='rect'){
-      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';
-      mctx.fillRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
-      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.12)';
-      mctx.lineWidth=isSel?1.5:0.8;
-      mctx.strokeRect(x-r*1.4,y-r*0.65,r*2.8,r*1.3);
-    } else if(shape==='square'){
-      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';
-      mctx.fillRect(x-r,y-r,r*2,r*2);
-      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.12)';
-      mctx.lineWidth=isSel?1.5:0.8;
-      mctx.strokeRect(x-r,y-r,r*2,r*2);
-    } else if(shape==='oval'){
-      mctx.beginPath();mctx.ellipse(x,y,r*1.5,r*0.85,0,0,Math.PI*2);
-      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
-      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
-      mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
-    } else { // round default
-      mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
-      mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
-      mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
-      mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
-    }
-    mctx.fillStyle='#fff';
-    mctx.font=`${Math.max(8,10*mScale)}px 'DM Mono',monospace`;
-    mctx.textAlign='center';
-    mctx.textBaseline='middle';
-    mctx.shadowBlur=0;
-    mctx.fillText(t.label||t.table_number,x,y);
-    mctx.restore();
-  });
-}
+    function updateQRSize(v) { qrSize = parseInt(v); document.getElementById('qr-size-val').textContent = v + 'px'; renderDispPreview(); }
 
-function autoL(){
-  const n=parseInt(document.getElementById('etn').value)||20;
-  mapTs=[];
-  const cols=Math.ceil(Math.sqrt(n*1.3));
-  const rows=Math.ceil(n/cols);
-  // Espacio lógico fijo de 1000x800 — independiente del canvas
-  const LOGICAL_W=1000, LOGICAL_H=800;
-  const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
-  for(let i=0;i<n;i++){
-    const c=i%cols, ro=Math.floor(i/cols);
-    mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
-  }
-  centerM(); // centrar siempre al auto-generar
-}
+    function renderDispPreview() {
+      const container = document.getElementById('disp-preview-container');
+      const isH = document.getElementById('eo').value === 'horizontal';
+      const name = document.getElementById('eh').value || 'Nombre Festejado';
+      const type = document.getElementById('et').value;
+      const welcome = document.getElementById('ew').value || '¡Bienvenidos!';
 
-function resizeMapCanvas(){
-  const w=document.getElementById('mw');
-  if(!w||!mc)return;
-  const rect=w.getBoundingClientRect();
-  mW=rect.width||w.offsetWidth||800;
-  mH=rect.height||w.offsetHeight||480;
-  mc.width=mW;mc.height=mH;
-  mctx=mc.getContext('2d');
-  drawMap();
-}
-
-let mapIsExpanded=false;
-function toggleMapExpand(){
-  const w=document.getElementById('mw');
-  const btn=document.getElementById('map-expand-btn');
-  mapIsExpanded=!mapIsExpanded;
-  w.classList.toggle('expanded', mapIsExpanded);
-  btn.textContent=mapIsExpanded?'✕ Cerrar':'⤢ Expandir';
-  // Bloquear scroll del body cuando está expandido
-  document.body.style.overflow=mapIsExpanded?'hidden':'';
-  setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 50);
-}
-
-function centerM(){
-  if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
-  const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
-  const allY=[...mapTs.map(t=>t.y),...mapMarkers.map(m=>m.y)];
-  const minX=Math.min(...allX),maxX=Math.max(...allX);
-  const minY=Math.min(...allY),maxY=Math.max(...allY);
-  const rangeX=maxX-minX||1, rangeY=maxY-minY||1;
-  const pad=70;
-  const scX=(mW-pad*2)/rangeX;
-  const scY=(mH-pad*2)/rangeY;
-  mScale=Math.max(0.1,Math.min(4,Math.min(scX,scY)*0.88));
-  // Centrar: el centro del bounding box queda en el centro del canvas
-  const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
-  mPan.x=mW/2 - cx*mScale;
-  mPan.y=mH/2 - cy*mScale;
-  drawMap();
-}
-
-function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
-function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
-function zoomM(f){mScale=Math.max(0.15,Math.min(5,mScale*f));drawMap();}
-function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
-
-/* QR */
-function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
-function dURL(id){return`${location.origin}${location.pathname.replace('admin.html','display.html')}?event=${id}`;}
-
-function updateQRSize(val){
-  qrSize=parseInt(val);
-  document.getElementById('qr-size-val').textContent=val+'px';
-  renderDispPreview();
-  // Re-gen real QR with new size
-  const id=curEv?curEv.id:'preview';
-  const url=gURL(id);
-  document.getElementById('qrcode').innerHTML='';
-  try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}
-}
-
-function renderDispPreview(){
-  const container=document.getElementById('disp-preview-container');
-  if(!container)return;
-  const orient=document.getElementById('eo').value||'vertical';
-  const name=document.getElementById('en').value||'Nombre del Evento';
-  const type=document.getElementById('et').value||'Evento';
-  const welcome=document.getElementById('ew').value||'Bienvenidos';
-  const isH=orient==='horizontal';
-
-  const previewQRSize=isH?60:50;
-  container.innerHTML=`
-    <div class="disp-preview-wrap ${isH?'horiz':'vert'}">
-      <div class="disp-prev-bg" id="dp-bg">
-        ${bgD?(bgT==='video'?`<video src="${bgD}" autoplay muted loop style="width:100%;height:100%;object-fit:cover;opacity:.4;"></video>`:`<img src="${bgD}" style="width:100%;height:100%;object-fit:cover;opacity:.4;">`):
-        `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);"></div>`}
+      container.className = `disp-preview-wrap ${isH ? 'horiz' : 'vert'}`;
+      container.innerHTML = `
+    <div class="disp-prev-bg">${bgD ? (bgT === 'video' ? `<video src="${bgD}" muted autoplay loop></video>` : `<img src="${bgD}">`) : ''}</div>
+    <div class="disp-prev-content ${isH ? 'horiz' : ''}">
+      <div class="disp-prev-top">
+        <div class="disp-prev-type" style="color:${selC}">${type}</div>
+        <div class="disp-prev-name">${name}</div>
       </div>
-      <div class="disp-prev-content ${isH?'horiz':''}">
-        <div class="disp-prev-top">
-          <div class="disp-prev-type">${type}</div>
-          <div class="disp-prev-name" style="color:${selC||'#b8973a'}">${name}</div>
-        </div>
-        <div class="disp-prev-qr-wrap">
-          <div class="disp-prev-qr" style="width:${previewQRSize}px;height:${previewQRSize}px;background:#fff;display:flex;align-items:center;justify-content:center;">
-            <div style="font-size:${previewQRSize*0.55}px;opacity:0.3;">▣</div>
-          </div>
-          <div class="disp-prev-scan">SCAN HERE</div>
-        </div>
-        <div class="disp-prev-bot">
-          <div class="disp-prev-welcome">${welcome}</div>
-        </div>
+      <div class="disp-prev-qr-wrap">
+        <div class="disp-prev-qr"><div id="prev-qr-box"></div></div>
+        <div class="disp-prev-scan">Escanea tu mesa</div>
+      </div>
+      <div class="disp-prev-bot">
+        <div class="disp-prev-welcome">${welcome}</div>
       </div>
     </div>
-    <p style="font-size:0.65rem;color:var(--gray);text-align:center;margin-top:6px;">Vista previa · ${isH?'Horizontal':'Vertical'} · QR: ${qrSize}px</p>
+    <p style="position:absolute;bottom:4px;left:0;right:0;font-size:0.65rem;color:var(--gray);text-align:center;margin-top:6px;">Vista previa · ${isH ? 'Horizontal' : 'Vertical'} · QR: ${qrSize}px</p>
   `;
-}
+      // Generar mini QR para preview
+      setTimeout(() => {
+        try { new QRCode(document.getElementById('prev-qr-box'), { text: 'https://mesa-qr.com', width: 40, height: 40 }); } catch (x) { }
+      }, 50);
+    }
 
-function genQR(){
-  renderDispPreview();
-  const id=curEv?curEv.id:'preview';
-  const url=gURL(id);
-  document.getElementById('qu').textContent=url;
-  document.getElementById('qrcode').innerHTML='';
-  try{new QRCode(document.getElementById('qrcode'),{text:url,width:qrSize,height:qrSize,colorDark:'#0a0a0a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});}catch(x){}
-  document.getElementById('qr-size-val').textContent=qrSize+'px';
-  document.getElementById('qr-size-range').value=qrSize;
-}
-function dlQR(){const c=document.querySelector('#qrcode canvas');if(!c){toast('Genera primero');return;}const a=document.createElement('a');a.download='qr.png';a.href=c.toDataURL();a.click();}
-function cpURL(){navigator.clipboard.writeText(document.getElementById('qu').textContent);toast('URL copiada');}
-function cpURLById(id){navigator.clipboard.writeText(gURL(id));toast('URL copiada');}
-function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero');}
-function openDispById(id){window.open(dURL(id),'_blank');}
+    function genQR() {
+      renderDispPreview();
+      const id = curEv ? curEv.id : 'preview';
+      const url = gURL(id);
+      document.getElementById('qu').textContent = url;
+      document.getElementById('qrcode').innerHTML = '';
+      try { new QRCode(document.getElementById('qrcode'), { text: url, width: qrSize, height: qrSize, colorDark: '#0a0a0a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); } catch (x) { }
+      document.getElementById('qr-size-val').textContent = qrSize + 'px';
+      document.getElementById('qr-size-range').value = qrSize;
+    }
 
-/* UI */
-function closeModal(){
-  if(mapIsExpanded)toggleMapExpand();
-  document.getElementById('modal').classList.remove('open');
-}
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+    function gURL(id) { return `https://mesaqr-guest.netlify.app/?e=${id}`; }
+    function dURL(id) { return `https://mesaqr-display.netlify.app/?e=${id}`; }
 
-loadDash();
+    function dlQR() { const c = document.querySelector('#qrcode canvas'); if (!c) { toast('Genera primero'); return; } const a = document.createElement('a'); a.download = 'qr.png'; a.href = c.toDataURL(); a.click(); }
+    function cpURL() { navigator.clipboard.writeText(document.getElementById('qu').textContent); toast('URL copiada'); }
+    function cpURLById(id) { navigator.clipboard.writeText(gURL(id)); toast('URL copiada'); }
+    function openDisp() { if (curEv) openDispById(curEv.id); else toast('Guarda primero'); }
+    function openDispById(id) { window.open(dURL(id), '_blank'); }
+
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+    function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+    async function saveEv() {
+      const data = {
+        name: document.getElementById('en').value,
+        date: document.getElementById('ed').value,
+        venue: document.getElementById('ev').value,
+        host_name: document.getElementById('eh').value,
+        welcome_msg: document.getElementById('ew').value,
+        type: document.getElementById('et').value,
+        orientation: document.getElementById('eo').value,
+        tables_count: parseInt(document.getElementById('etn').value),
+        bg_url: bgD,
+        bg_type: bgT,
+        accent_color: selC,
+        animation_type: selA,
+        reveal_anim: document.getElementById('eta').value,
+        qr_size: qrSize,
+        guests_count: curGs.length
+      };
+
+      if (!data.name) { toast('Nombre requerido'); return; }
+
+      let evId;
+      if (curEv) {
+        evId = curEv.id;
+        await db.patch('events', evId, data);
+      } else {
+        const res = await db.post('events', data);
+        evId = res.id;
+      }
+
+      // Guardar Invitados
+      await db.dw('guests', 'event_id', evId);
+      for (const g of curGs) {
+        delete g.id;
+        g.event_id = evId;
+        await db.post('guests', g);
+      }
+
+      // Guardar Layout de Mesas
+      await db.dw('table_layout', 'event_id', evId);
+      for (const t of mapTs) {
+        delete t.id; delete t.created_at;
+        t.event_id = evId;
+        await db.post('table_layout', t);
+      }
+
+      // Guardar Marcadores
+      await db.dw('map_markers', 'event_id', evId);
+      for (const m of mapMarkers) {
+        delete m.id; delete m.created_at;
+        m.event_id = evId;
+        await db.post('map_markers', m);
+      }
+
+      toast('Evento guardado');
+      closeModal();
+      refresh();
+    }
+
+    function impCSV(input) {
+      const f = input.files; if (!f) return;
+      const r = new FileReader();
+      r.onload = e => {
+        const lines = e.target.result.split('\n');
+        lines.forEach(l => {
+          const p = l.split(',');
+          if (p.length >= 2) curGs.push({ id: 'csv-' + Math.random(), name: p.trim(), table_number: p.trim() });
+        });
+        renderGs();
+      };
+      r.readAsText(f);
+    }
+    function dlTpl() {
+      const c = "Nombre,Mesa\nJuan Perez,1\nMaria Garcia,2";
+      const b = new Blob([c], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'plantilla.csv'; a.click();
+    }
+
+    function initMapOnce() {
+      // Función auxiliar por si se requiere reinicialización manual
+      resizeM();
+    }
   </script>
 </body>
 
