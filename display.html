@@ -391,7 +391,7 @@ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
 
 const params=new URLSearchParams(location.search);
-const EID=params.get('event');
+const EID=params.get('e')||params.get('event');
 let ev=null,animPs=[],animRun=false,animFr=null;
 const canvas=document.getElementById('ac');
 const ctx=canvas.getContext('2d');
@@ -430,7 +430,7 @@ function applyBg(){
 }
 
 function buildQR(){
-  const url=`${location.origin}${location.pathname.replace('display.html','guest.html')}?event=${EID}`;
+  const url=`${location.origin}${location.pathname.replace('display.html','guest.html')}?e=${EID}`;
   const size=ev.qr_size||200;
   // Set CSS variable for dynamic sizing
   document.documentElement.style.setProperty('--qr-size', size+'px');

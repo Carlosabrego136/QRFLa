@@ -682,7 +682,7 @@
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const p=new URLSearchParams(location.search);
-const EID=p.get('event');
+const EID=p.get('e')||p.get('event');
 let ev=null,guests=[],layout=[],foundTable=null;
 let animPs=[],animRun=false,animFr=null;
 let mapScale=1,mapPan={x:0,y:0},mapTouches=null;
