@@ -1456,7 +1456,7 @@ function initMap(){
     const hm=hitMarker(mx,my);
     if(hm!==-1){mMarkerDrag=mapMarkers[hm];selMarker=hm;mMarkerSx=mx-mapMarkers[hm].x*mScale;mMarkerSy=my-mapMarkers[hm].y*mScale;drawMap();return;}
     const hit=mapTs.find(t=>hitT(t,mx,my));
-    if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
+    if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
     drawMap();};
   mc.ontouchmove=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
     if(Math.hypot(mx-mDownX,my-mDownY)>5)mDownMoved=true;
@@ -1505,19 +1505,20 @@ function mdStart(e){
     drawMap();return;
   }
 
-  // If entryMode active and no marker hit, we'll place on mouseup (if not dragged)
-  if(entryMode){ selMarker=null; drawMap(); return; }
-
   selMarker=null;
+  // Check if hitting a table — allow dragging it regardless of entryMode
   const hit=mapTs.find(t=>hitT(t,mx,my));
-  if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;}
-  else{
-    selT=null;
-    const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
-    const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
-    mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
-    document.getElementById('mtn').value=tn+1;
-  }
+  if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
+
+  // If entryMode active and no marker/table hit, we'll place new marker on mouseup (if not dragged)
+  if(entryMode){ selT=null; drawMap(); return; }
+
+  // No entryMode — place new table
+  selT=null;
+  const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
+  const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
+  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
+  document.getElementById('mtn').value=tn+1;
   drawMap();
 }
 function hitMarker(mx,my){
