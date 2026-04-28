@@ -1738,17 +1738,44 @@ function drawMap(){
 
 function autoL(){
   const n=parseInt(document.getElementById('etn').value)||20;
-  mapTs=[];
+
+  // Si ya hay mesas, conservar posiciones y solo agregar las que faltan
+  if(mapTs.length>0){
+    const existing=new Set(mapTs.map(t=>t.table_number));
+    const missing=[];
+    for(let i=1;i<=n;i++){if(!existing.has(i))missing.push(i);}
+
+    if(missing.length===0){
+      // Todas ya existen — solo recentrar la vista
+      toast('\u2726 Mesas ya colocadas \u00b7 centrando vista');
+      centerM();return;
+    }
+
+    // Colocar las nuevas debajo del bounding box actual
+    const allY=mapTs.map(t=>t.y);
+    const allX=mapTs.map(t=>t.x);
+    const maxY=Math.max(...allY);
+    const minX=Math.min(...allX), maxX=Math.max(...allX);
+    const zoneW=Math.max(maxX-minX,600);
+    const cols=Math.ceil(Math.sqrt(missing.length*1.3))||1;
+    const cw=zoneW/cols;
+    missing.forEach((tn,i)=>{
+      const c=i%cols, ro=Math.floor(i/cols);
+      mapTs.push({table_number:tn,x:minX+c*cw+cw/2,y:maxY+120+ro*120,shape:mShape,label:String(tn)});
+    });
+    toast('\u2726 '+missing.length+' mesa(s) nueva(s) agregada(s)');
+    centerM();return;
+  }
+
+  // Sin mesas previas — generar todas en cuadricula desde cero
   const cols=Math.ceil(Math.sqrt(n*1.3));
-  const rows=Math.ceil(n/cols);
-  // Espacio lógico fijo de 1000x800 — independiente del canvas
   const LOGICAL_W=1000, LOGICAL_H=800;
-  const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
+  const cw=LOGICAL_W/cols, ch=LOGICAL_H/Math.ceil(n/cols);
   for(let i=0;i<n;i++){
     const c=i%cols, ro=Math.floor(i/cols);
     mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
   }
-  centerM(); // centrar siempre al auto-generar
+  centerM();
 }
 
 function centerM(){
