@@ -1221,7 +1221,7 @@
             <span style="font-size:0.62rem;color:var(--gray);flex:1;">Si quieres editar las mesas oprime <strong>Auto</strong>, esto reordenará las mesas pero las etiquetas no.</span>
             <button class="btn bi bs" onclick="enableMapEdit()">✏️ Editar mapa</button>
           </div>
-          <div id="map-edit-controls">
+          <div id="map-edit-controls" style="display:none">
             <div class="map-tb">
               <div class="shape-row" id="shape-row">
                 <span style="font-size:0.62rem;color:var(--gray);letter-spacing:0.1em;text-transform:uppercase;margin-right:2px;">Forma:</span>
@@ -1491,6 +1491,7 @@ function setMapEditMode(editing){
 
 function enableMapEdit(){
   setMapEditMode(true);
+  drawMap();
 }
 
 function delSelMarker(){if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}else toast('Selecciona un marcador primero');}
