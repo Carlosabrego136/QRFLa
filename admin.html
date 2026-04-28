@@ -1235,7 +1235,7 @@
         <div id="t3" style="display:none">
           <div class="map-auto-hint">
             <span class="map-auto-hint-icon">💡</span>
-            <span><strong>Tip:</strong> Si las mesas se mueven o necesitas reacomodarlas, presiona <strong>⊞ Auto</strong> — las mesas volverán a acomodarse en su lugar. Si ya están colocadas, Auto solo agrega las que falten sin mover las existentes. Usa <strong>⊡ Centrar</strong> para ajustar la vista en cualquier momento.</span>
+            <span><strong>Tip:</strong> Si mueves o agregas mesas manualmente y necesitas reordenarlas, presiona <strong>⊞ Auto</strong> para redistribuirlas automáticamente. Usa <strong>⊡ Centrar</strong> para ajustar la vista después de mover elementos.</span>
           </div>
           <div class="map-tb">
             <div class="shape-row" id="shape-row">
@@ -1648,27 +1648,19 @@ function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(
 function drawMap(){
   if(!mctx)return;
   mctx.clearRect(0,0,mW,mH);
-  // Grid that moves with pan/zoom so it stays aligned with the tables
-  const gStep=60; // logical units between lines
-  const gPxStep=gStep*mScale;
-  if(gPxStep>8){ // only draw when lines are not too dense
-    const startX=((mPan.x%gPxStep)+gPxStep)%gPxStep;
-    const startY=((mPan.y%gPxStep)+gPxStep)%gPxStep;
-    mctx.save();
-    mctx.strokeStyle='rgba(0,0,0,0.07)';
-    mctx.lineWidth=0.5;
-    for(let x=startX;x<mW;x+=gPxStep){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
-    for(let y=startY;y<mH;y+=gPxStep){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
-    // Accent every 5 cells
-    const gPxStepBig=gPxStep*5;
-    const startXB=((mPan.x%gPxStepBig)+gPxStepBig)%gPxStepBig;
-    const startYB=((mPan.y%gPxStepBig)+gPxStepBig)%gPxStepBig;
-    mctx.strokeStyle='rgba(0,0,0,0.13)';
-    mctx.lineWidth=0.8;
-    for(let x=startXB;x<mW;x+=gPxStepBig){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
-    for(let y=startYB;y<mH;y+=gPxStepBig){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
-    mctx.restore();
-  }
+  // Subtle line grid
+  const gStep=40;
+  mctx.save();
+  mctx.strokeStyle='rgba(0,0,0,0.07)';
+  mctx.lineWidth=0.5;
+  for(let x=0;x<mW;x+=gStep){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
+  for(let y=0;y<mH;y+=gStep){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
+  // Accent lines every 5 cells
+  mctx.strokeStyle='rgba(0,0,0,0.12)';
+  mctx.lineWidth=0.7;
+  for(let x=0;x<mW;x+=gStep*5){mctx.beginPath();mctx.moveTo(x,0);mctx.lineTo(x,mH);mctx.stroke();}
+  for(let y=0;y<mH;y+=gStep*5){mctx.beginPath();mctx.moveTo(0,y);mctx.lineTo(mW,y);mctx.stroke();}
+  mctx.restore();
   
   // Draw markers (large, visible icons)
   mapMarkers.forEach((m,mi)=>{
@@ -1827,14 +1819,12 @@ function toggleMapExpand(){
   const btn=document.getElementById('map-expand-btn');
   const isExp=mo.classList.toggle('map-expanded');
   btn.textContent=isExp?'⛶ Contraer':'⛶ Expandir';
-  // Wait for CSS transition to finish, then re-measure and re-center
   setTimeout(()=>{
     const mw=document.getElementById('mw');
     mW=mw.offsetWidth; mH=mw.offsetHeight;
     mc.width=mW; mc.height=mH;
-    if(mc&&!mctx)mctx=mc.getContext('2d');
-    _doCenter();
-  },80);
+    drawMap();
+  },50);
 }
 
 /* QR */
