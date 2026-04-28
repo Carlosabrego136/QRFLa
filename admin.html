@@ -618,6 +618,85 @@
       border: 1px solid var(--line);
       background: var(--paper);
       overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .map-wrap.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 200;
+      border: none;
+      border-radius: 0;
+    }
+
+    .map-fs-bar {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 210;
+      background: var(--ink);
+      color: #fff;
+      padding: 10px 18px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.72rem;
+    }
+
+    .map-wrap.fullscreen~.map-fs-bar,
+    .map-fs-bar.visible {
+      display: flex;
+    }
+
+    .map-fs-bar .fs-btn {
+      padding: 5px 12px;
+      font-size: 0.68rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .map-fs-bar .fs-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .map-fs-bar .fs-btn.active {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .map-fs-bar .fs-close {
+      margin-left: auto;
+      background: #dc2626;
+      border-color: #dc2626;
+      padding: 5px 14px;
+      font-weight: 500;
+    }
+
+    .map-fs-bar .fs-close:hover {
+      background: #ef4444;
+    }
+
+    .map-fs-bar .fs-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+    }
+
+    .map-fs-bar .fs-sep {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.15);
     }
 
     #map-canvas {
@@ -1217,6 +1296,7 @@
             <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
             <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
+            <button class="btn bi bs" onclick="toggleFullscreen()" title="Pantalla completa">⛶ Expandir</button>
             <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
           </div>
           <div class="map-hint">
@@ -1236,6 +1316,19 @@
             <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
           </div>
           <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
+          <div class="map-fs-bar" id="fs-bar">
+            <span class="fs-label">Editor de Mesas</span>
+            <div class="fs-sep"></div>
+            <input type="number" id="mtn-fs" placeholder="# mesa" min="1" style="width:60px;padding:4px 7px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:0.72rem;outline:none;font-family:'DM Sans',sans-serif;">
+            <button class="fs-btn" onclick="autoL()">⊞ Auto</button>
+            <button class="fs-btn" onclick="centerM()">⊡ Centrar</button>
+            <button class="fs-btn" onclick="zoomIn()">＋ Zoom</button>
+            <button class="fs-btn" onclick="zoomOut()">－ Zoom</button>
+            <button class="fs-btn" onclick="clearM()">✕ Limpiar</button>
+            <div class="fs-sep"></div>
+            <span style="font-size:0.6rem;opacity:0.5;">Clic = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
+            <button class="fs-btn fs-close" onclick="toggleFullscreen()">✕ Cerrar</button>
+          </div>
           <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn bo" onclick="gt(2)">← Anterior</button>
             <button class="btn bi" onclick="gt(4)">Siguiente →</button>
@@ -1484,6 +1577,13 @@ function initMap(){
   mW=w.clientWidth;mH=w.clientHeight;
   mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
+  // Sincronizar inputs de mesa entre barra normal y fullscreen
+  const mtnMain=document.getElementById('mtn');
+  const mtnFs=document.getElementById('mtn-fs');
+  if(mtnMain&&mtnFs){
+    mtnMain.addEventListener('input',()=>{mtnFs.value=mtnMain.value;});
+    mtnFs.addEventListener('input',()=>{mtnMain.value=mtnFs.value;});
+  }
   if(!mapTs.length&&curEv===null){
     autoL();
   } else if(curEv!==null){
@@ -1521,6 +1621,7 @@ function initMap(){
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mapFullscreen){toggleFullscreen();}});
 }
 
 let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
@@ -1715,6 +1816,37 @@ function centerM(){
 function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
 function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
+
+let mapFullscreen=false;
+function toggleFullscreen(){
+  const mw=document.getElementById('mw');
+  const bar=document.getElementById('fs-bar');
+  mapFullscreen=!mapFullscreen;
+  if(mapFullscreen){
+    mw.classList.add('fullscreen');
+    bar.classList.add('visible');
+    // Sincronizar input de mesa
+    const fsInput=document.getElementById('mtn-fs');
+    if(fsInput) fsInput.value=document.getElementById('mtn').value;
+    // Re-calcular canvas al nuevo tamaño
+    setTimeout(()=>{
+      mW=mw.clientWidth;mH=mw.clientHeight;
+      mc.width=mW;mc.height=mH;
+      centerM();
+    },50);
+  } else {
+    mw.classList.remove('fullscreen');
+    bar.classList.remove('visible');
+    // Sincronizar input de mesa de vuelta
+    const fsInput=document.getElementById('mtn-fs');
+    if(fsInput) document.getElementById('mtn').value=fsInput.value;
+    setTimeout(()=>{
+      mW=mw.clientWidth;mH=mw.clientHeight;
+      mc.width=mW;mc.height=mH;
+      centerM();
+    },50);
+  }
+}
 
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
