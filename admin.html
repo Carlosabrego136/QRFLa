@@ -1309,8 +1309,7 @@
     let selMarkerIdx = -1;
     let mMarkerDrag = null;
 
-    // --- NUEVAS CONSTANTES SISTEMA MAGNÉTICO ---
-    const GRID_SIZE = 40; // Tamaño de cada cuadro de la cuadrícula
+    const GRID_SIZE = 40; 
 
     window.onload = () => { mc = document.getElementById('map-canvas'); mctx = mc.getContext('2d'); refresh(); initEvents(); };
 
@@ -1368,7 +1367,7 @@
     const all = await db.get('guests');
     const container = document.getElementById('g-all');
     if (!all.length) { container.innerHTML = '<div class="empty">No hay invitados registrados</div>'; return; }
-    let h = '<table class="gt">
+    let h = `<table class="gt">
       <thead>
         <tr>
           <th>Nombre</th>
@@ -1376,7 +1375,7 @@
           <th>Evento</th>
         </tr>
       </thead>
-      <tbody>';
+      <tbody>`;
         all.forEach(g => {
         const ev = evs.find(e => e.id === g.event_id);
         h += `<tr>
@@ -1385,8 +1384,7 @@
           <td>${ev ? ev.name : '—'}</td>
         </tr>`;
         });
-        h += '</tbody>
-    </table>';
+        h += '</tbody></table>';
     container.innerHTML = h;
     }
     
@@ -1513,7 +1511,6 @@
       drawMap();
       }
 
-    // --- MEJORA: DIBUJO DE CUADRÍCULA ---
     function drawMap() {
       if (!mctx) return;
       mctx.clearRect(0, 0, mW, mH);
@@ -1521,12 +1518,10 @@
       mctx.translate(mPan.x, mPan.y);
       mctx.scale(mScale, mScale);
 
-      // Dibujar Cuadrícula de referencia
       mctx.beginPath();
       mctx.strokeStyle = 'rgba(0,0,0,0.05)';
       mctx.lineWidth = 1 / mScale;
       
-      // Dibujamos un área grande para la cuadrícula
       const range = 3000; 
       for (let x = -range; x <= range; x += GRID_SIZE) {
         mctx.moveTo(x, -range);
@@ -1549,7 +1544,6 @@
       mctx.strokeStyle = isSel ? '#000' : '#ddd';
       mctx.lineWidth = 2 / mScale;
       
-      // Ajustamos el tamaño visual para que encaje bien en los cuadros de 40px
       const size = GRID_SIZE - 4; 
 
       if (t.shape === 'round') {
@@ -1568,7 +1562,6 @@
     }
 
     function drawMarker(m, isSel) {
-      const size = 16 / mScale;
       mctx.save();
       mctx.translate(m.x, m.y);
       mctx.fillStyle = isSel ? '#000' : '#888';
@@ -1595,7 +1588,6 @@
         const x = (e.clientX - rect.left - mPan.x) / mScale;
         const y = (e.clientY - rect.top - mPan.y) / mScale;
 
-        // Buscar marcador
         selMarkerIdx = mapMarkers.findIndex(m => Math.hypot(m.x - x, m.y - y) < 20 / mScale);
         if (selMarkerIdx !== -1) {
           mMarkerDrag = mapMarkers[selMarkerIdx];
@@ -1603,12 +1595,10 @@
           drawMap(); return;
         }
 
-        // Buscar mesa
         selT = mapTs.find(t => Math.hypot(t.x - x, t.y - y) < 25 / mScale);
         if (selT) { mDrag = selT; drawMap(); return; }
 
         if (entryMode) {
-          // Agregar marcador con imán
           mapMarkers.push({ 
             type: entryMode, 
             x: Math.round(x / GRID_SIZE) * GRID_SIZE, 
@@ -1618,7 +1608,6 @@
           drawMap(); return;
         }
 
-        // Agregar mesa con imán
         const n = document.getElementById('mtn').value;
         mapTs.push({ 
           table_number: n || (mapTs.length + 1), 
@@ -1635,14 +1624,12 @@
         if (mDrag) {
           const x = (e.clientX - rect.left - mPan.x) / mScale;
           const y = (e.clientY - rect.top - mPan.y) / mScale;
-          // Efecto Imán
           mDrag.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
           mDrag.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
           drawMap();
         } else if (mMarkerDrag) {
           const x = (e.clientX - rect.left - mPan.x) / mScale;
           const y = (e.clientY - rect.top - mPan.y) / mScale;
-          // Efecto Imán
           mMarkerDrag.x = Math.round(x / GRID_SIZE) * GRID_SIZE;
           mMarkerDrag.y = Math.round(y / GRID_SIZE) * GRID_SIZE;
           drawMap();
@@ -1685,7 +1672,6 @@
     function zoomIn() { mScale *= 1.2; drawMap(); }
     function zoomOut() { mScale *= 0.8; drawMap(); }
 
-    // --- MEJORA: CENTRADO INTELIGENTE ---
     function centerM(keepZoom = false) {
       if (!mapTs.length && !mapMarkers.length) {
         mPan = { x: mW / 2, y: mH / 2 };
@@ -1776,7 +1762,6 @@
     </div>
     <p style="position:absolute;bottom:4px;left:0;right:0;font-size:0.65rem;color:var(--gray);text-align:center;margin-top:6px;">Vista previa · ${isH ? 'Horizontal' : 'Vertical'} · QR: ${qrSize}px</p>
   `;
-      // Generar mini QR para preview
       setTimeout(() => {
         try { new QRCode(document.getElementById('prev-qr-box'), { text: 'https://mesa-qr.com', width: 40, height: 40 }); } catch (x) { }
       }, 50);
@@ -1835,7 +1820,6 @@
         evId = res.id;
       }
 
-      // Guardar Invitados
       await db.dw('guests', 'event_id', evId);
       for (const g of curGs) {
         delete g.id;
@@ -1843,7 +1827,6 @@
         await db.post('guests', g);
       }
 
-      // Guardar Layout de Mesas
       await db.dw('table_layout', 'event_id', evId);
       for (const t of mapTs) {
         delete t.id; delete t.created_at;
@@ -1851,7 +1834,6 @@
         await db.post('table_layout', t);
       }
 
-      // Guardar Marcadores
       await db.dw('map_markers', 'event_id', evId);
       for (const m of mapMarkers) {
         delete m.id; delete m.created_at;
@@ -1884,7 +1866,6 @@
     }
 
     function initMapOnce() {
-      // Función auxiliar por si se requiere reinicialización manual
       resizeM();
     }
   </script>
