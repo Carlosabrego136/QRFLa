@@ -1515,21 +1515,19 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
-  mctx=null; // reset until resize done
-  // Use requestAnimationFrame to guarantee the DOM has rendered the tab before measuring
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      mW=w.clientWidth||w.offsetWidth;
-      mH=w.clientHeight||w.offsetHeight;
-      mc.width=mW; mc.height=mH;
-      mctx=mc.getContext('2d');
-      if(!mapTs.length && curEv===null){
-        autoL();
-      } else {
-        centerM();
-      }
-    });
-  });
+  // Double rAF ensures the tab is fully painted before we measure
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    mW=w.offsetWidth; mH=w.offsetHeight;
+    mc.width=mW; mc.height=mH;
+    mctx=mc.getContext('2d');
+    // Normalise coords from DB (may arrive as strings)
+    mapTs=mapTs.map(t=>({...t,x:parseFloat(t.x),y:parseFloat(t.y)}));
+    if(mapTs.length===0 && curEv===null){
+      autoL();          // brand-new event → generate grid
+    } else {
+      _doCenter();      // existing event → show saved positions
+    }
+  }));
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
@@ -1745,68 +1743,63 @@ function drawMap(){
 function autoL(){
   const n=parseInt(document.getElementById('etn').value)||20;
 
-  // Si ya hay mesas, conservar posiciones y solo agregar las que faltan
   if(mapTs.length>0){
-    const existing=new Set(mapTs.map(t=>t.table_number));
+    // Keep existing positions — only add tables that are missing
+    const existing=new Set(mapTs.map(t=>Number(t.table_number)));
     const missing=[];
     for(let i=1;i<=n;i++){if(!existing.has(i))missing.push(i);}
 
     if(missing.length===0){
-      // Todas ya existen — solo recentrar la vista
       toast('\u2726 Mesas ya colocadas \u00b7 centrando vista');
-      centerM();return;
+      _doCenter();return;
     }
 
-    // Colocar las nuevas debajo del bounding box actual
-    const allY=mapTs.map(t=>t.y);
-    const allX=mapTs.map(t=>t.x);
+    // Place new tables below the current bounding box
+    const allY=mapTs.map(t=>parseFloat(t.y));
+    const allX=mapTs.map(t=>parseFloat(t.x));
     const maxY=Math.max(...allY);
     const minX=Math.min(...allX), maxX=Math.max(...allX);
     const zoneW=Math.max(maxX-minX,600);
     const cols=Math.ceil(Math.sqrt(missing.length*1.3))||1;
     const cw=zoneW/cols;
     missing.forEach((tn,i)=>{
-      const c=i%cols, ro=Math.floor(i/cols);
-      mapTs.push({table_number:tn,x:minX+c*cw+cw/2,y:maxY+120+ro*120,shape:mShape,label:String(tn)});
+      const col=i%cols, ro=Math.floor(i/cols);
+      mapTs.push({table_number:tn,x:minX+col*cw+cw/2,y:maxY+120+ro*120,shape:mShape,label:String(tn)});
     });
     toast('\u2726 '+missing.length+' mesa(s) nueva(s) agregada(s)');
-    centerM();return;
+    _doCenter();return;
   }
 
-  // Sin mesas previas — generar todas en cuadricula desde cero
+  // No tables yet — generate full grid from scratch
   const cols=Math.ceil(Math.sqrt(n*1.3));
   const LOGICAL_W=1000, LOGICAL_H=800;
   const cw=LOGICAL_W/cols, ch=LOGICAL_H/Math.ceil(n/cols);
   for(let i=0;i<n;i++){
-    const c=i%cols, ro=Math.floor(i/cols);
-    mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
+    const col=i%cols, ro=Math.floor(i/cols);
+    mapTs.push({table_number:i+1,x:col*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
   }
-  centerM();
+  _doCenter();
 }
 
-function centerM(){
-  // If canvas not measured yet, wait one frame and retry
-  const w=document.getElementById('mw');
-  if(!mW||!mH||!mctx){
-    mW=w?w.offsetWidth:0; mH=w?w.offsetHeight:0;
-    if(!mW||!mH){requestAnimationFrame(centerM);return;}
-    if(mc){mc.width=mW;mc.height=mH;}
-    if(mc&&!mctx)mctx=mc.getContext('2d');
-  }
+// _doCenter: internal — assumes mW/mH/mctx are already valid
+function _doCenter(){
   if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
-  const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
-  const allY=[...mapTs.map(t=>t.y),...mapMarkers.map(m=>m.y)];
+  const allX=[...mapTs.map(t=>parseFloat(t.x)),...mapMarkers.map(m=>parseFloat(m.x))];
+  const allY=[...mapTs.map(t=>parseFloat(t.y)),...mapMarkers.map(m=>parseFloat(m.y))];
   const minX=Math.min(...allX),maxX=Math.max(...allX);
   const minY=Math.min(...allY),maxY=Math.max(...allY);
   const rangeX=maxX-minX||1, rangeY=maxY-minY||1;
   const pad=70;
-  const scX=(mW-pad*2)/rangeX;
-  const scY=(mH-pad*2)/rangeY;
-  mScale=Math.max(0.1,Math.min(4,Math.min(scX,scY)*0.88));
-  const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
-  mPan.x=mW/2 - cx*mScale;
-  mPan.y=mH/2 - cy*mScale;
+  mScale=Math.max(0.1,Math.min(4,Math.min((mW-pad*2)/rangeX,(mH-pad*2)/rangeY)*0.88));
+  mPan.x=mW/2-((minX+maxX)/2)*mScale;
+  mPan.y=mH/2-((minY+maxY)/2)*mScale;
   drawMap();
+}
+// centerM: public button — re-measures canvas first in case window was resized
+function centerM(){
+  const w=document.getElementById('mw');
+  if(w){mW=w.offsetWidth;mH=w.offsetHeight;if(mc){mc.width=mW;mc.height=mH;}if(mc&&!mctx)mctx=mc.getContext('2d');}
+  _doCenter();
 }
 
 function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
