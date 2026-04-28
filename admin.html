@@ -1487,10 +1487,10 @@ async function editEv(id){
   qrSize=curEv.qr_size||200;
   document.getElementById('bg-prev').innerHTML=bgD?(bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`):'';
   curGs=await db.get('guests',`event_id=eq.${id}`);
-  curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
+  curGs=(curGs||[]).map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
   // Cargar offsets de etiquetas desde la DB
-  mapTs=mapTs.map(t=>({...t,labelOffsetX:t.label_offset_x||0,labelOffsetY:t.label_offset_y||0}));
+  mapTs=(mapTs||[]).map(t=>({...t,labelOffsetX:t.label_offset_x||0,labelOffsetY:t.label_offset_y||0}));
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
   // Cargar scale y pan del evento
   mScale=curEv.map_scale||1;
