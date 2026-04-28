@@ -1687,9 +1687,9 @@ function mdStart(e){
 
   if(selMarker!==null){
     const m=mapMarkers[selMarker];
-    const r=Math.max(26,32*mScale);
+    const r=Math.min(Math.max(20,24*mScale),40);
     const mx2=m.x*mScale+mPan.x+r-4, my2=m.y*mScale+mPan.y-r+4;
-    const xr=Math.max(8,10*mScale);
+    const xr=Math.min(Math.max(8,9*mScale),12);
     if(Math.hypot(mx-mx2,my-my2)<=xr){
       mapMarkers.splice(selMarker,1);selMarker=null;drawMap();return;
     }
@@ -1732,7 +1732,7 @@ function hitMarker(mx,my){
   for(let i=0;i<mapMarkers.length;i++){
     const m=mapMarkers[i];
     const x=m.x*mScale+mPan.x,y=m.y*mScale+mPan.y;
-    const r=Math.max(26,32*mScale);
+    const r=Math.min(Math.max(20,24*mScale),40);
     if(Math.hypot(mx-x,my-y)<=r)return i;
   }
   return -1;
