@@ -660,15 +660,14 @@
         </div>
         <div class="res-actions">
           <button class="btn-ac btn-out" onclick="resetSearch()">🔍 Buscar otro</button>
-          <button class="btn-ac btn-main" onclick="toggleMap()">🗺 Mapa de mesas</button>
+          <button class="btn-ac btn-main" onclick="toggleMap()">🗺 Ver mapa de mesas</button>
         </div>
       </div>
     </div>
 
     <!-- MAP -->
     <div class="map-section" id="map-section">
-      <button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">🗺 Ver mapa de mesas ▾</button>
-      <div class="map-body" id="map-body">
+      <div class="map-body open" id="map-body">
         <canvas id="guest-map-canvas"></canvas>
         <div class="map-legend">Tu mesa está <span>resaltada</span> — los iconos muestran entradas, escenario y más
         </div>
@@ -782,21 +781,11 @@ function showResult(name,tnum){
   document.getElementById('map-section').style.display='block';
   document.getElementById('again').style.display='block';
 
-  // Abrir el mapa PRIMERO para que tenga dimensiones reales al dibujar
-  const mapBody=document.getElementById('map-body');
-  mapBody.classList.add('open');
-  const btn=document.getElementById('map-toggle-btn');
-  if(btn) btn.textContent='🗺 Ver mapa de mesas ▴';
-
   // Trigger celebration animation
   triggerCelebration();
 
-  // Dibujar mapa: esperar 2 frames para que el DOM procese display:block
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      drawGuestMap(tnum);
-    });
-  });
+  // Draw map with highlight
+  setTimeout(()=>{drawGuestMap(tnum);},200);
 
   setTimeout(()=>document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}),150);
 }
@@ -804,15 +793,7 @@ function showResult(name,tnum){
 function toggleMap(){
   const body=document.getElementById('map-body');
   body.classList.toggle('open');
-  const btn=document.getElementById('map-toggle-btn');
-  const isOpen=body.classList.contains('open');
-  if(btn) btn.textContent=isOpen?'🗺 Ver mapa de mesas ▴':'🗺 Ver mapa de mesas ▾';
-  if(isOpen&&foundTable){
-    // Doble rAF para que el display:block se aplique antes de medir
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>drawGuestMap(foundTable));
-    });
-  }
+  if(body.classList.contains('open')&&foundTable) drawGuestMap(foundTable);
 }
 
 function resetSearch(){
@@ -822,8 +803,6 @@ function resetSearch(){
   document.getElementById('again').style.display='none';
   document.getElementById('not-found').style.display='none';
   document.getElementById('map-body').classList.remove('open');
-  const btn=document.getElementById('map-toggle-btn');
-  if(btn) btn.textContent='🗺 Ver mapa de mesas ▾';
   foundTable=null;
   stopCelebration();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -837,25 +816,17 @@ const GM_LABELS={entry:'Entrada',exit:'Salida',stage:'Escenario',bar:'Barra',dan
 
 function drawGuestMap(highlightN){
   const canvas=document.getElementById('guest-map-canvas');
-  if(!canvas)return;
   const wrap=canvas.parentElement;
-
-  // Si el contenedor está oculto (display:none), usar un ancho estimado
-  let W=wrap.clientWidth||wrap.offsetWidth||document.getElementById('result').clientWidth||360;
-  if(W<10) W=Math.min(window.innerWidth-32, 440);
+  const W=wrap.clientWidth;
 
   // Parse markers
   let markers=[];
   try{if(ev.map_markers)markers=JSON.parse(ev.map_markers);}catch(x){}
 
   const hasItems=layout.length>0;
-  const H=Math.min(Math.max(hasItems?380:180, W*0.65), 500);
-
-  // Forzar dimensiones en el canvas
-  canvas.width=W; canvas.height=H;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  canvas.style.display='block';
-
+  // Altura suficiente — no se corte
+  const H=Math.min(Math.max(hasItems?380:180, W*0.7), 480);
+  canvas.width=W; canvas.height=H; canvas.style.height=H+'px';
   const ctx2=canvas.getContext('2d');
 
   if(!hasItems){
@@ -888,8 +859,8 @@ function drawGuestMap(highlightN){
   function tx(x){return x*sc+offX;}
   function ty(y){return y*sc+offY;}
 
-  // Tamaño de mesa proporcional, legible, con tope
-  const r=Math.min(Math.max(8,Math.min(18,sc*16)),22);
+  // Tamaño de mesa proporcional, legible
+  const r=Math.max(10,Math.min(22,sc*18));
   const ac2=ev.color||'#b8973a';
 
   function drawFrame(pf){
@@ -909,7 +880,7 @@ function drawGuestMap(highlightN){
     markers.forEach(m=>{
       const x=tx(m.x), y=ty(m.y);
       const col=GM_COLORS[m.type]||'#888';
-      const mr=Math.min(Math.max(12,r*1.1),20); // tope para no agrandarse de más
+      const mr=Math.max(16,r*1.3);
       ctx2.save();
       ctx2.shadowBlur=14; ctx2.shadowColor=col+'88';
       ctx2.beginPath(); ctx2.arc(x,y,mr,0,Math.PI*2);
@@ -972,20 +943,11 @@ function drawGuestMap(highlightN){
         ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.stroke();
       }
       ctx2.shadowBlur=0;
-      // Label with offset support
-      const lox=(t.label_offset_x||t.labelOffsetX||0)*sc, loy=(t.label_offset_y||t.labelOffsetY||0)*sc;
-      const lx=x+lox, ly=y+loy;
-      const fs=Math.max(8,r*0.7);
-      ctx2.font=`${isHL?'bold ':''} ${fs}px DM Mono,monospace`;
+      // Número de mesa — más grande y legible
+      ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.6)';
+      ctx2.font=`${isHL?'bold ':''} ${Math.max(8,r*0.7)}px DM Mono,monospace`;
       ctx2.textAlign='center';ctx2.textBaseline='middle';
-      const txt=String(t.label||t.table_number);
-      if(lox!==0||loy!==0){
-        ctx2.beginPath();ctx2.moveTo(x,y);ctx2.lineTo(lx,ly);
-        ctx2.strokeStyle=isHL?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.2)';
-        ctx2.lineWidth=0.8;ctx2.setLineDash([3,3]);ctx2.stroke();ctx2.setLineDash([]);
-      }
-      ctx2.fillStyle=isHL?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.6)';
-      ctx2.fillText(txt,lx,ly);
+      ctx2.fillText(t.label||t.table_number,x,y);
       ctx2.restore();
     });
   }

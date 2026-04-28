@@ -614,89 +614,43 @@
     .map-wrap {
       position: relative;
       width: 100%;
-      height: 600px;
+      height: 480px;
       border: 1px solid var(--line);
       background: var(--paper);
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: height 0.3s ease;
     }
 
-    .map-wrap.fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 200;
-      border: none;
-      border-radius: 0;
-    }
-
-    .map-fs-bar {
-      display: none;
+    .map-wrap.expanded {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 210;
+      bottom: 0;
+      width: 100vw;
+      height: 100vh !important;
+      z-index: 9999;
+      border: none;
+      background: var(--paper);
+    }
+
+    .map-expand-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      color: var(--ink);
+    }
+
+    .map-expand-btn:hover {
       background: var(--ink);
       color: #fff;
-      padding: 10px 18px;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      font-size: 0.72rem;
-    }
-
-    .map-wrap.fullscreen~.map-fs-bar,
-    .map-fs-bar.visible {
-      display: flex;
-    }
-
-    .map-fs-bar .fs-btn {
-      padding: 5px 12px;
-      font-size: 0.68rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.15s;
-    }
-
-    .map-fs-bar .fs-btn:hover {
-      background: rgba(255, 255, 255, 0.18);
-      border-color: rgba(255, 255, 255, 0.4);
-    }
-
-    .map-fs-bar .fs-btn.active {
-      background: var(--gold);
-      border-color: var(--gold);
-    }
-
-    .map-fs-bar .fs-close {
-      margin-left: auto;
-      background: #dc2626;
-      border-color: #dc2626;
-      padding: 5px 14px;
-      font-weight: 500;
-    }
-
-    .map-fs-bar .fs-close:hover {
-      background: #ef4444;
-    }
-
-    .map-fs-bar .fs-label {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1rem;
-      font-weight: 300;
-      letter-spacing: 0.04em;
-    }
-
-    .map-fs-bar .fs-sep {
-      width: 1px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.15);
     }
 
     #map-canvas {
@@ -1061,25 +1015,6 @@
       color: var(--ink);
       min-width: 42px;
     }
-
-    /* Aviso AUTO */
-    .map-hint {
-      background: #fef8f0;
-      border: 1px solid #fed7aa;
-      padding: 10px 14px;
-      margin: 10px 0;
-      border-radius: 4px;
-      font-size: 0.72rem;
-      color: #92400e;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .map-hint-icon {
-      font-size: 0.9rem;
-      flex-shrink: 0;
-    }
   </style>
 </head>
 
@@ -1296,12 +1231,7 @@
             <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
             <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
-            <button class="btn bi bs" onclick="toggleFullscreen()" title="Pantalla completa">⛶ Expandir</button>
             <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
-          </div>
-          <div class="map-hint">
-            <span class="map-hint-icon">ℹ️</span>
-            <span><strong>Consejo:</strong> Presiona <strong>"⊞ Auto"</strong> para reacomodar automáticamente todas las mesas</span>
           </div>
           <div class="map-entry-row">
             <label>Marcadores:</label>
@@ -1315,26 +1245,13 @@
             <div class="entry-btn" onclick="editSelMarker()">✏️ Editar etiqueta</div>
             <span style="font-size:0.6rem;color:var(--gray);margin-left:auto;">Clic = seleccionar · Clic doble = editar · Supr = borrar</span>
           </div>
-          <div class="map-wrap" id="mw"><canvas id="map-canvas"></canvas></div>
-          <div class="map-fs-bar" id="fs-bar">
-            <span class="fs-label">Editor de Mesas</span>
-            <div class="fs-sep"></div>
-            <input type="number" id="mtn-fs" placeholder="# mesa" min="1" style="width:60px;padding:4px 7px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:0.72rem;outline:none;font-family:'DM Sans',sans-serif;">
-            <button class="fs-btn" onclick="autoL()">⊞ Auto</button>
-            <button class="fs-btn" onclick="centerM()">⊡ Centrar</button>
-            <button class="fs-btn" onclick="zoomIn()">＋ Zoom</button>
-            <button class="fs-btn" onclick="zoomOut()">－ Zoom</button>
-            <button class="fs-btn" onclick="clearM()">✕ Limpiar</button>
-            <button class="fs-btn active" onclick="saveMap()" style="background:var(--gold);border-color:var(--gold);">✦ Guardar Mapa</button>
-            <div class="fs-sep"></div>
-            <span style="font-size:0.6rem;opacity:0.5;">Clic = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
-            <button class="fs-btn fs-close" onclick="toggleFullscreen()">✕ Cerrar</button>
+          <div class="map-wrap" id="mw">
+            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpand()">⤢ Expandir</button>
+            <canvas id="map-canvas"></canvas>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;margin-top:12px;">
             <button class="btn bo" onclick="gt(2)">← Anterior</button>
-            <button class="btn bg" onclick="saveMap()" id="btn-save-map">✦ Guardar Mapa</button>
             <button class="btn bi" onclick="gt(4)">Siguiente →</button>
-            <span id="map-save-status" style="font-size:0.68rem;color:var(--gray);margin-left:4px;"></span>
           </div>
         </div>
 
@@ -1386,7 +1303,7 @@
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oYXN2YWp5bXphd3F5a2VzYWVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNDM2MDUsImV4cCI6MjA5MjgxOTYwNX0.zU6gQii-EqKakxeTOvjMNYDlb6s_mFdNtjc_F0iEVl0';
 const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
 const db={
-  async get(t,q=''){const r=await(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();return Array.isArray(r)?r:[];},
+  async get(t,q=''){return(await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`,{headers:H})).json();},
   async post(t,d){return(await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
   async patch(t,id,d){return(await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=representation'},body:JSON.stringify(d)})).json();},
   async del(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});},
@@ -1396,8 +1313,8 @@ const db={
 let evs=[],curEv=null,curGs=[],mapTs=[],bgD=null,bgT=null,selC='#b8973a',selA='particles';
 let ctab=0,mShape='round',mScale=1,mPan={x:0,y:0},selT=null,mDrag=null,mSx=0,mSy=0;
 let mc,mctx,mW,mH;
-let entryMode=null;
-let mapMarkers=[];
+let entryMode=null; // 'entry','exit','stage','bar','dance'
+let mapMarkers=[]; // {type, x, y, label}
 let qrSize=200;
 
 /* NAV */
@@ -1490,15 +1407,11 @@ async function editEv(id){
   qrSize=curEv.qr_size||200;
   document.getElementById('bg-prev').innerHTML=bgD?(bgT==='video'?`<video src="${bgD}" style="max-height:110px" muted autoplay loop></video>`:`<img src="${bgD}" style="max-height:110px">`):'';
   curGs=await db.get('guests',`event_id=eq.${id}`);
-  curGs=(curGs||[]).map(g=>({name:g.name,table_number:g.table_number}));
+  curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
-  // Cargar offsets de etiquetas desde la DB
-  mapTs=(mapTs||[]).map(t=>({...t,labelOffsetX:t.label_offset_x||0,labelOffsetY:t.label_offset_y||0}));
+  // Load markers from event data (stored as JSON in map_markers column)
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
-  // Cargar scale y pan del evento
-  mScale=curEv.map_scale||1;
-  mPan={x:curEv.map_pan_x||0,y:curEv.map_pan_y||0};
-  selMarker=null; selT=null;
+  selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
   rGuests();
   document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
   gt(0);document.getElementById('modal').classList.add('open');
@@ -1509,76 +1422,27 @@ async function saveEv(){
   const name=document.getElementById('en').value.trim();
   if(!name){toast('Ingresa el nombre');gt(0);return;}
   toast('Guardando...');
-  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers),map_scale:mScale,map_pan_x:mPan.x,map_pan_y:mPan.y};
+  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers)};
   let eid;
   if(curEv){
     await db.patch('events',curEv.id,data);eid=curEv.id;
     await db.dw('guests','event_id',eid);
     await db.dw('table_layout','event_id',eid);
   } else {
-    const res=await db.post('events',data);
-    eid=res[0]?.id;
-    if(eid){curEv={...data,id:eid};}// actualizar curEv para que saveMap funcione
+    const res=await db.post('events',data);eid=res[0]?.id;
   }
-  if(!eid){toast('Error al guardar — intenta de nuevo');return;}
-  if(curGs.length) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
-  if(mapTs.length){
+  if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
+  if(mapTs.length&&eid){
     await db.post('table_layout',mapTs.map(t=>({
       event_id:eid,
       table_number:t.table_number,
-      x:parseFloat(t.x.toFixed(4)),
-      y:parseFloat(t.y.toFixed(4)),
+      x:parseFloat((+t.x).toFixed(4)),
+      y:parseFloat((+t.y).toFixed(4)),
       shape:t.shape||mShape,
-      label:t.label||String(t.table_number),
-      label_offset_x:parseFloat((t.labelOffsetX||0).toFixed(4)),
-      label_offset_y:parseFloat((t.labelOffsetY||0).toFixed(4))
+      label:t.label||String(t.table_number)
     })));
   }
-  closeModal();toast('✦ Evento guardado');
-  // Recargar el dashboard siempre para que aparezca el nuevo evento
-  evs=await db.get('events');
-  const gsAll=await db.get('guests');
-  const tlAll=await db.get('table_layout');
-  document.getElementById('s0').textContent=evs.length;
-  document.getElementById('s1').textContent=gsAll.length;
-  document.getElementById('s2').textContent=tlAll.length;
-  document.getElementById('s3').textContent=evs.length;
-  document.getElementById('recent').innerHTML=evs.length?'<div class="eg">'+evs.slice(0,6).map(eCard).join('')+'</div>':'<div class="empty"><div class="empty-i">◈</div>Sin eventos aún</div>';
-  // Mostrar dashboard si no está visible
-  ['dashboard','events','qrs','guests'].forEach(x=>{const e=document.getElementById('p-'+x);if(e)e.style.display=x==='dashboard'?'block':'none';});
-  document.getElementById('ptitle').textContent='Dashboard';
-}
-
-async function saveMap(){
-  if(!curEv){toast('Guarda el evento primero (pestaña QR & Guardar)');return;}
-  const btn=document.getElementById('btn-save-map');
-  const status=document.getElementById('map-save-status');
-  if(btn)btn.disabled=true;
-  if(status)status.textContent='Guardando...';
-  try{
-    await db.patch('events',curEv.id,{map_markers:JSON.stringify(mapMarkers),map_scale:mScale,map_pan_x:mPan.x,map_pan_y:mPan.y});
-    await db.dw('table_layout','event_id',curEv.id);
-    if(mapTs.length){
-      await db.post('table_layout',mapTs.map(t=>({
-        event_id:curEv.id,
-        table_number:t.table_number,
-        x:parseFloat(t.x.toFixed(4)),
-        y:parseFloat(t.y.toFixed(4)),
-        shape:t.shape||mShape,
-        label:t.label||String(t.table_number),
-        label_offset_x:parseFloat((t.labelOffsetX||0).toFixed(4)),
-        label_offset_y:parseFloat((t.labelOffsetY||0).toFixed(4))
-      })));
-    }
-    if(status)status.textContent='✓ Mapa guardado';
-    toast('✦ Mapa guardado — visible para invitados');
-    setTimeout(()=>{if(status)status.textContent='';},3000);
-  }catch(err){
-    if(status)status.textContent='Error al guardar';
-    toast('Error al guardar el mapa');
-  }finally{
-    if(btn)btn.disabled=false;
-  }
+  closeModal();toast('✦ Evento guardado');loadDash();
 }
 
 async function delEv(id){
@@ -1628,25 +1492,9 @@ let selMarker=null;
 function initMap(){
   const w=document.getElementById('mw');
   mc=document.getElementById('map-canvas');
-  mW=w.clientWidth;mH=w.clientHeight;
-  mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
-  // Sincronizar inputs de mesa entre barra normal y fullscreen
-  const mtnMain=document.getElementById('mtn');
-  const mtnFs=document.getElementById('mtn-fs');
-  if(mtnMain&&mtnFs){
-    mtnMain.addEventListener('input',()=>{mtnFs.value=mtnMain.value;});
-    mtnFs.addEventListener('input',()=>{mtnMain.value=mtnFs.value;});
-  }
-  if(!mapTs.length&&curEv===null){
-    autoL();
-  } else if(curEv!==null){
-    // Modo edición: usar scale/pan guardados
-    drawMap();
-  } else {
-    // Primero centrar
-    setTimeout(()=>centerM(), 50);
-  }
+
+  // Registrar eventos de input (solo una vez por instancia)
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
@@ -1675,26 +1523,39 @@ function initMap(){
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mapFullscreen){toggleFullscreen();}});
+
+  // Esperar dos frames para que el navegador pinte el tab antes de medir
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const rect=w.getBoundingClientRect();
+    mW=rect.width||w.offsetWidth||800;
+    mH=rect.height||w.offsetHeight||480;
+    mc.width=mW;mc.height=mH;
+    if(!mapTs.length&&curEv===null){
+      autoL();
+    } else {
+      centerM();
+    }
+  }));
 }
 
 let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
-let mLabelDrag=null,mLabelSx=0,mLabelSy=0; // arrastre de etiqueta de mesa
 
 function mdStart(e){
   const{mx,my}=mc2(e);
   mDownX=mx;mDownY=my;mDownMoved=false;
 
+  // Check if clicking delete X of selected marker first
   if(selMarker!==null){
     const m=mapMarkers[selMarker];
-    const r=Math.min(Math.max(20,24*mScale),40);
+    const r=Math.max(26,32*mScale);
     const mx2=m.x*mScale+mPan.x+r-4, my2=m.y*mScale+mPan.y-r+4;
-    const xr=Math.min(Math.max(8,9*mScale),12);
+    const xr=Math.max(8,10*mScale);
     if(Math.hypot(mx-mx2,my-my2)<=xr){
       mapMarkers.splice(selMarker,1);selMarker=null;drawMap();return;
     }
   }
 
+  // Check if hitting an existing marker — allow dragging it
   const hm=hitMarker(mx,my);
   if(hm!==-1){
     mMarkerDrag=mapMarkers[hm];
@@ -1705,26 +1566,19 @@ function mdStart(e){
   }
 
   selMarker=null;
-
-  // Check if clicking a table label first (priority over table body)
-  const hitLabelT=mapTs.find(t=>hitLabel(t,mx,my));
-  if(hitLabelT){
-    mLabelDrag=hitLabelT;selT=hitLabelT;
-    const ox=(hitLabelT.labelOffsetX||0)*mScale, oy=(hitLabelT.labelOffsetY||0)*mScale;
-    mLabelSx=mx-(hitLabelT.x*mScale+mPan.x+ox);
-    mLabelSy=my-(hitLabelT.y*mScale+mPan.y+oy);
-    drawMap();return;
-  }
-
+  // Check if hitting a table — allow dragging it regardless of entryMode
   const hit=mapTs.find(t=>hitT(t,mx,my));
   if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
 
+  // If entryMode active and no marker/table hit, we'll place new marker on mouseup (if not dragged)
   if(entryMode){ selT=null; drawMap(); return; }
 
+  // No entryMode — place new table
   selT=null;
   const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
+  // Coordenada lógica = (pixel - pan) / scale
   const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
-  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn),labelOffsetX:0,labelOffsetY:0});
+  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
   document.getElementById('mtn').value=tn+1;
   drawMap();
 }
@@ -1732,7 +1586,7 @@ function hitMarker(mx,my){
   for(let i=0;i<mapMarkers.length;i++){
     const m=mapMarkers[i];
     const x=m.x*mScale+mPan.x,y=m.y*mScale+mPan.y;
-    const r=Math.min(Math.max(20,24*mScale),40);
+    const r=Math.max(26,32*mScale);
     if(Math.hypot(mx-x,my-y)<=r)return i;
   }
   return -1;
@@ -1742,23 +1596,19 @@ function mdMove(e){
   const{mx,my}=mc2(e);
   if(Math.hypot(mx-mDownX,my-mDownY)>5) mDownMoved=true;
   if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
-  if(mLabelDrag){
-    const newPx=mx-mLabelSx, newPy=my-mLabelSy;
-    mLabelDrag.labelOffsetX=(newPx-mLabelDrag.x*mScale-mPan.x)/mScale;
-    mLabelDrag.labelOffsetY=(newPy-mLabelDrag.y*mScale-mPan.y)/mScale;
-    drawMap();return;
-  }
   if(!mDrag)return;
   mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();
 }
 function mdUp(e){
   const{mx,my}=mc2(e);
-  if(entryMode&&!mDownMoved&&mMarkerDrag===null&&mLabelDrag===null){
+  // Place new marker only if entryMode active and didn't drag and didn't hit existing marker
+  if(entryMode&&!mDownMoved&&mMarkerDrag===null){
     const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
     mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
     selMarker=mapMarkers.length-1;
     drawMap();
   }
+  // Handle marker click (select / double-select to edit)
   if(!mDownMoved&&mMarkerDrag!==null){
     const mi=mapMarkers.indexOf(mMarkerDrag);
     if(selMarker===mi&&mi!==-1){
@@ -1766,30 +1616,12 @@ function mdUp(e){
       if(newLabel!==null)mMarkerDrag.customLabel=newLabel;
     }
   }
-  // Doble-clic en mesa sin mover = editar etiqueta de mesa
-  if(!mDownMoved&&mDrag!==null&&mLabelDrag===null){
-    const newLabel=prompt('Etiqueta de la mesa:',mDrag.label||String(mDrag.table_number));
-    if(newLabel!==null)mDrag.label=newLabel;
-    drawMap();
-  }
-  mDrag=null;mMarkerDrag=null;mLabelDrag=null;
+  mDrag=null;mMarkerDrag=null;
 }
 function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
-function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.min(Math.max(10,16*mScale),32);
+function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);
   if(t.shape==='rect'||t.shape==='square') return mx>=x-r*1.4&&mx<=x+r*1.4&&my>=y-r*.75&&my<=y+r*.75;
   return Math.hypot(mx-x,my-y)<=r;}
-
-function hitLabel(t,mx,my){
-  const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y;
-  const ox=(t.labelOffsetX||0)*mScale, oy=(t.labelOffsetY||0)*mScale;
-  const lx=x+ox, ly=y+oy;
-  const fs=Math.max(8,10*mScale);
-  mctx.font=`${fs}px 'DM Mono',monospace`;
-  const txt=String(t.label||t.table_number);
-  const tw=mctx.measureText(txt).width+6;
-  const th=fs+4;
-  return mx>=lx-tw/2&&mx<=lx+tw/2&&my>=ly-th/2&&my<=ly+th/2;
-}
 
 function drawMap(){
   if(!mctx)return;
@@ -1797,42 +1629,44 @@ function drawMap(){
   // Dot grid
   mctx.fillStyle='rgba(0,0,0,0.05)';
   for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
-
-  // Draw markers
+  
+  // Draw markers (large, visible icons)
   mapMarkers.forEach((m,mi)=>{
     const x=m.x*mScale+mPan.x, y=m.y*mScale+mPan.y;
     const col=MARKER_COLORS[m.type]||'#888';
-    const r=Math.min(Math.max(20,24*mScale),40); // tope máximo de 40px
+    const r=Math.max(26,32*mScale);
     const isSel=selMarker===mi;
     mctx.save();
+    // Glow for selected
     if(isSel){mctx.shadowBlur=20;mctx.shadowColor=col;}
+    // Background circle
     mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2);
     mctx.fillStyle=col+(isSel?'cc':'55'); mctx.fill();
     mctx.strokeStyle=col; mctx.lineWidth=isSel?3:2;
     mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2); mctx.stroke();
     mctx.shadowBlur=0;
-    const emojiSize=Math.min(Math.max(14,16*mScale),22); // tope 22px
+    // Emoji icon — large and visible
+    const emojiSize=Math.max(18,22*mScale);
     mctx.font=`${emojiSize}px serif`;
     mctx.textAlign='center'; mctx.textBaseline='middle';
     mctx.fillText(MARKER_ICONS[m.type]||'📍',x,y);
-    const labelY=y+r+Math.min(Math.max(8,10*mScale),14);
-    const lblFontSize=Math.min(Math.max(9,10*mScale),13);
-    mctx.font=`bold ${lblFontSize}px 'DM Sans',sans-serif`;
+    // Label below
+    const labelY=y+r+Math.max(10,13*mScale);
+    mctx.font=`bold ${Math.max(9,11*mScale)}px 'DM Sans',sans-serif`;
     mctx.textBaseline='top';
-    const lbl=m.customLabel||MARKER_LABELS[m.type]||m.type;
-    const lw=mctx.measureText(lbl).width+8;
-    const lh=lblFontSize+4;
+    // Background for label
+    const lw=mctx.measureText(m.customLabel||MARKER_LABELS[m.type]||m.type).width+8;
     mctx.fillStyle='rgba(0,0,0,0.65)';
-    mctx.fillRect(x-lw/2,labelY-2,lw,lh);
+    mctx.fillRect(x-lw/2,labelY-2,lw,Math.max(14,16*mScale));
     mctx.fillStyle='#fff';
-    mctx.fillText(lbl,x,labelY);
+    mctx.fillText(m.customLabel||MARKER_LABELS[m.type]||m.type,x,labelY);
+    // Delete X if selected
     if(isSel){
-      const xbx=x+r-4,xby=y-r+4;
-      const xbr=Math.min(Math.max(8,9*mScale),12);
-      mctx.font=`bold ${xbr}px sans-serif`;
+      mctx.font=`bold ${Math.max(10,12*mScale)}px sans-serif`;
       mctx.fillStyle='#fff';
       mctx.textBaseline='middle';
-      mctx.beginPath();mctx.arc(xbx,xby,xbr,0,Math.PI*2);
+      const xbx=x+r-4,xby=y-r+4;
+      mctx.beginPath();mctx.arc(xbx,xby,Math.max(8,10*mScale),0,Math.PI*2);
       mctx.fillStyle='#dc2626';mctx.fill();
       mctx.fillStyle='#fff';mctx.fillText('✕',xbx,xby);
     }
@@ -1841,8 +1675,7 @@ function drawMap(){
 
   // Draw tables
   mapTs.forEach(t=>{
-    const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.min(Math.max(10,16*mScale),32),isSel=selT===t;
-    const isLabelSel=mLabelDrag===t;
+    const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale),isSel=selT===t;
     mctx.save();
     if(isSel){mctx.shadowBlur=14;mctx.shadowColor='rgba(184,151,58,0.5)';}
     const shape=t.shape||mShape;
@@ -1863,37 +1696,16 @@ function drawMap(){
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
       mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
-    } else {
+    } else { // round default
       mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
       mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
     }
-    // Draw label with offset
-    const ox=(t.labelOffsetX||0)*mScale, oy=(t.labelOffsetY||0)*mScale;
-    const lx=x+ox, ly=y+oy;
-    const fs=Math.max(8,10*mScale);
-    mctx.font=`${fs}px 'DM Mono',monospace`;
+    mctx.fillStyle='#fff';
+    mctx.font=`${Math.max(8,10*mScale)}px 'DM Mono',monospace`;
     mctx.textAlign='center';mctx.textBaseline='middle';
-    const txt=String(t.label||t.table_number);
-    const tw=mctx.measureText(txt).width+6;
-    const th=fs+4;
-    // Label background
-    mctx.fillStyle=isLabelSel?'#b8973a':'rgba(255,255,255,0.92)';
-    mctx.fillRect(lx-tw/2,ly-th/2,tw,th);
-    // Label border
-    mctx.strokeStyle=isLabelSel?'#b8973a':'rgba(0,0,0,0.15)';
-    mctx.lineWidth=isLabelSel?1.5:0.5;
-    mctx.strokeRect(lx-tw/2,ly-th/2,tw,th);
-    // Label text
-    mctx.fillStyle=isLabelSel?'#fff':'#0a0a0a';
-    mctx.fillText(txt,lx,ly);
-    // Line from table to label if offset
-    if(Math.abs(t.labelOffsetX||0)>5||Math.abs(t.labelOffsetY||0)>5){
-      mctx.beginPath();mctx.moveTo(x,y);mctx.lineTo(lx,ly);
-      mctx.strokeStyle='rgba(184,151,58,0.35)';mctx.lineWidth=1;
-      mctx.setLineDash([3,3]);mctx.stroke();mctx.setLineDash([]);
-    }
+    mctx.fillText(t.label||t.table_number,x,y);
     mctx.restore();
   });
 }
@@ -1901,25 +1713,39 @@ function drawMap(){
 function autoL(){
   const n=parseInt(document.getElementById('etn').value)||20;
   mapTs=[];
-  // Con muchas mesas, usar más columnas y espaciado mayor para que quepan
-  const cols=Math.ceil(Math.sqrt(n*1.5));
+  const cols=Math.ceil(Math.sqrt(n*1.3));
   const rows=Math.ceil(n/cols);
-  // Espacio lógico proporcional al número de mesas
-  const cellSize=Math.max(60, Math.min(120, 2400/Math.max(cols,rows)));
-  const LOGICAL_W=cols*cellSize, LOGICAL_H=rows*cellSize;
+  // Espacio lógico fijo de 1000x800 — independiente del canvas
+  const LOGICAL_W=1000, LOGICAL_H=800;
+  const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
   for(let i=0;i<n;i++){
     const c=i%cols, ro=Math.floor(i/cols);
-    mapTs.push({
-      table_number:i+1,
-      x:c*cellSize+cellSize/2,
-      y:ro*cellSize+cellSize/2,
-      shape:mShape,
-      label:String(i+1),
-      labelOffsetX:0,
-      labelOffsetY:0
-    });
+    mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
   }
-  centerM();
+  centerM(); // centrar siempre al auto-generar
+}
+
+function resizeMapCanvas(){
+  const w=document.getElementById('mw');
+  if(!w||!mc)return;
+  const rect=w.getBoundingClientRect();
+  mW=rect.width||w.offsetWidth||800;
+  mH=rect.height||w.offsetHeight||480;
+  mc.width=mW;mc.height=mH;
+  mctx=mc.getContext('2d');
+  drawMap();
+}
+
+let mapIsExpanded=false;
+function toggleMapExpand(){
+  const w=document.getElementById('mw');
+  const btn=document.getElementById('map-expand-btn');
+  mapIsExpanded=!mapIsExpanded;
+  w.classList.toggle('expanded', mapIsExpanded);
+  btn.textContent=mapIsExpanded?'✕ Cerrar':'⤢ Expandir';
+  // Bloquear scroll del body cuando está expandido
+  document.body.style.overflow=mapIsExpanded?'hidden':'';
+  setTimeout(()=>{ resizeMapCanvas(); centerM(); }, 50);
 }
 
 function centerM(){
@@ -1933,63 +1759,17 @@ function centerM(){
   const scX=(mW-pad*2)/rangeX;
   const scY=(mH-pad*2)/rangeY;
   mScale=Math.max(0.1,Math.min(4,Math.min(scX,scY)*0.88));
+  // Centrar: el centro del bounding box queda en el centro del canvas
   const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
   mPan.x=mW/2 - cx*mScale;
   mPan.y=mH/2 - cy*mScale;
   drawMap();
 }
 
-function zoomIn(){
-  // Zoom hacia el centro del canvas
-  const cx=mW/2, cy=mH/2;
-  const factor=1.25;
-  mPan.x=cx-(cx-mPan.x)*factor;
-  mPan.y=cy-(cy-mPan.y)*factor;
-  mScale=Math.min(5,mScale*factor);
-  drawMap();
-}
-
-function zoomOut(){
-  // Zoom alejando desde el centro del canvas
-  const cx=mW/2, cy=mH/2;
-  const factor=0.8;
-  mPan.x=cx-(cx-mPan.x)*factor;
-  mPan.y=cy-(cy-mPan.y)*factor;
-  mScale=Math.max(0.1,mScale*factor);
-  drawMap();
-}
+function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
+function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function zoomM(f){mScale=Math.max(0.15,Math.min(5,mScale*f));drawMap();}
 function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
-
-let mapFullscreen=false;
-function toggleFullscreen(){
-  const mw=document.getElementById('mw');
-  const bar=document.getElementById('fs-bar');
-  mapFullscreen=!mapFullscreen;
-  if(mapFullscreen){
-    mw.classList.add('fullscreen');
-    bar.classList.add('visible');
-    // Sincronizar input de mesa
-    const fsInput=document.getElementById('mtn-fs');
-    if(fsInput) fsInput.value=document.getElementById('mtn').value;
-    // Re-calcular canvas al nuevo tamaño
-    setTimeout(()=>{
-      mW=mw.clientWidth;mH=mw.clientHeight;
-      mc.width=mW;mc.height=mH;
-      centerM();
-    },50);
-  } else {
-    mw.classList.remove('fullscreen');
-    bar.classList.remove('visible');
-    // Sincronizar input de mesa de vuelta
-    const fsInput=document.getElementById('mtn-fs');
-    if(fsInput) document.getElementById('mtn').value=fsInput.value;
-    setTimeout(()=>{
-      mW=mw.clientWidth;mH=mw.clientHeight;
-      mc.width=mW;mc.height=mH;
-      centerM();
-    },50);
-  }
-}
 
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}
@@ -1999,6 +1779,7 @@ function updateQRSize(val){
   qrSize=parseInt(val);
   document.getElementById('qr-size-val').textContent=val+'px';
   renderDispPreview();
+  // Re-gen real QR with new size
   const id=curEv?curEv.id:'preview';
   const url=gURL(id);
   document.getElementById('qrcode').innerHTML='';
@@ -2058,7 +1839,10 @@ function openDisp(){if(curEv)openDispById(curEv.id);else toast('Guarda primero')
 function openDispById(id){window.open(dURL(id),'_blank');}
 
 /* UI */
-function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeModal(){
+  if(mapIsExpanded)toggleMapExpand();
+  document.getElementById('modal').classList.remove('open');
+}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 loadDash();
