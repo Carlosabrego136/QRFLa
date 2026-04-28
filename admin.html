@@ -1137,7 +1137,10 @@
         <div id="t1" style="display:none">
           <div class="fi">
             <label>Fondo (imagen o video)</label>
-            <div class="uz"><input type="file" accept="image/*,video/mp4,video/webm" onchange="handleBg(this)">
+            <div class="uz" id="bg-drop-zone" ondragover="event.preventDefault();this.style.borderColor='var(--ink)'"
+              ondragleave="this.style.borderColor=''"
+              ondrop="event.preventDefault();this.style.borderColor='';handleBgDrop(event)">
+              <input type="file" accept="image/*,video/mp4,video/webm" onchange="handleBg(this)">
               <p>Arrastra o <strong>haz clic</strong><br><span style="font-size:0.6rem">JPG · PNG · MP4 · WebM</span>
               </p>
               <div id="bg-prev" style="margin-top:8px;"></div>
@@ -1293,11 +1296,33 @@
     const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
     const db = {
-      async get(t, q = '') { return (await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`, { headers: H })).json(); },
-      async post(t, d) { return (await fetch(`${SB}/rest/v1/${t}`, { method: 'POST', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) })).json(); },
-      async patch(t, id, d) { return (await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'PATCH', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) })).json(); },
-      async del(t, id) { await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'DELETE', headers: H }); },
-      async dw(t, c, v) { await fetch(`${SB}/rest/v1/${t}?${c}=eq.${v}`, { method: 'DELETE', headers: H }); }
+      async get(t, q = '') { 
+        try {
+          const r = await fetch(`${SB}/rest/v1/${t}?${q}&order=created_at.desc`, { headers: H });
+          const d = await r.json();
+          return Array.isArray(d) ? d : [];
+        } catch(e) { console.error('db.get error:', e); return []; }
+      },
+      async post(t, d) { 
+        try {
+          const r = await fetch(`${SB}/rest/v1/${t}`, { method: 'POST', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) });
+          const j = await r.json();
+          return Array.isArray(j) ? j : (j ? [j] : []);
+        } catch(e) { console.error('db.post error:', e); return []; }
+      },
+      async patch(t, id, d) { 
+        try {
+          const r = await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'PATCH', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(d) });
+          const j = await r.json();
+          return Array.isArray(j) ? j : (j ? [j] : []);
+        } catch(e) { console.error('db.patch error:', e); return []; }
+      },
+      async del(t, id) { 
+        try { await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`, { method: 'DELETE', headers: H }); } catch(e) {}
+      },
+      async dw(t, c, v) { 
+        try { await fetch(`${SB}/rest/v1/${t}?${c}=eq.${v}`, { method: 'DELETE', headers: H }); } catch(e) {}
+      }
     };
 
     let evs = [], curEv = null, curGs = [], mapTs = [], bgD = null, bgT = null, selC = '#b8973a', selA = 'particles';
@@ -1337,12 +1362,20 @@
     }
 
     function card(e) {
+      const dateStr = e.date ? new Date(e.date).toLocaleDateString('es-MX', {year:'numeric',month:'short',day:'numeric'}) : '—';
       return `
     <div class="ec" onclick="editEv('${e.id}')">
-      <div class="ec-tag">${e.type}</div>
+      <div class="ec-tag">${e.type || 'Evento'}</div>
       <div class="ec-n">${e.name}</div>
-      <div class="ec-m">${e.venue} · ${e.date}</div>
-      <div class="ec-st"><span>MesaQR System</span><span>ID: ${e.id.split('-')}</span></div>
+      <div class="ec-m">${e.venue || ''} · ${dateStr}</div>
+      <div class="ec-st">
+        <span>${e.host || ''}</span>
+        <span>${e.table_count || 0} mesas</span>
+      </div>
+      <div class="ec-a">
+        <button class="btn bo bs" onclick="event.stopPropagation();editEv('${e.id}')">✏ Editar</button>
+        <button class="btn bd bs" onclick="event.stopPropagation();delEv('${e.id}')">✕</button>
+      </div>
     </div>`;
     }
     function qrcard(e) {
@@ -1357,10 +1390,14 @@
     function updateStats() {
     document.getElementById('s0').textContent = evs.length;
     let totalG = 0, totalM = 0;
-    evs.forEach(e => { totalG += (e.guests_count || 0); totalM += (e.tables_count || 0); });
-    document.getElementById('s1').textContent = totalG;
+    evs.forEach(e => { totalM += (e.table_count || 0); });
+    // get real guest count from DB is done async in refresh, use a separate total
     document.getElementById('s2').textContent = totalM;
     document.getElementById('s3').textContent = evs.length;
+    // fetch total guests count
+    db.get('guests', 'select=id').then(all => {
+      document.getElementById('s1').textContent = all.length || 0;
+    }).catch(() => {});
     }
     
     async function loadGs() {
@@ -1410,38 +1447,47 @@
     async function editEv(id) {
     curEv = evs.find(e => e.id === id);
     document.getElementById('mo-title').innerHTML = 'Editar <em>Evento</em>';
-    document.getElementById('en').value = curEv.name;
-    document.getElementById('ed').value = curEv.date;
-    document.getElementById('ev').value = curEv.venue;
-    document.getElementById('eh').value = curEv.host_name;
+    document.getElementById('en').value = curEv.name || '';
+    document.getElementById('ed').value = curEv.date || '';
+    document.getElementById('ev').value = curEv.venue || '';
+    document.getElementById('eh').value = curEv.host || '';
     document.getElementById('ew').value = curEv.welcome_msg || '';
-    document.getElementById('et').value = curEv.type;
+    document.getElementById('et').value = curEv.type || 'Boda';
     document.getElementById('eo').value = curEv.orientation || 'vertical';
-    document.getElementById('etn').value = curEv.tables_count || 20;
-    selC = curEv.accent_color || '#b8973a';
-    selA = curEv.animation_type || 'particles';
+    document.getElementById('etn').value = curEv.table_count || 20;
+    selC = curEv.color || '#b8973a';
+    selA = curEv.animation || 'particles';
     qrSize = curEv.qr_size || 200;
     document.getElementById('ec').value = selC;
     document.getElementById('ea').value = selA;
-    document.getElementById('eta').value = curEv.reveal_anim || 'glow';
+    document.getElementById('eta').value = curEv.table_anim || 'glow';
     document.getElementById('qr-size-range').value = qrSize;
     document.getElementById('qr-size-val').textContent = qrSize + 'px';
     
     document.querySelectorAll('.sw').forEach(s => { s.classList.toggle('on', s.dataset.c === selC); });
     document.querySelectorAll('.ao').forEach(a => { a.classList.toggle('on', a.dataset.a === selA); });
     
-    bgD = curEv.bg_url; bgT = curEv.bg_type;
+    bgD = curEv.bg_url || null; bgT = curEv.bg_type || null;
     renderBgPrev();
     
     curGs = await db.get('guests', `event_id=eq.${id}`);
     renderGs();
     
     mapTs = await db.get('table_layout', `event_id=eq.${id}`);
-    mapMarkers = await db.get('map_markers', `event_id=eq.${id}`);
+    
+    // map_markers is stored as JSON text in the events table
+    try {
+      mapMarkers = curEv.map_markers ? JSON.parse(curEv.map_markers) : [];
+    } catch(e) { mapMarkers = []; }
+    
+    // Restore map view state
+    mScale = curEv.map_scale || 1;
+    mPan.x = curEv.map_pan_x || 0;
+    mPan.y = curEv.map_pan_y || 0;
     
     gt(0);
     document.getElementById('modal').classList.add('open');
-    setTimeout(() => { resizeM(); centerM(true); }, 100);
+    setTimeout(() => { resizeM(); if (mapTs.length || mapMarkers.length) centerM(true); }, 100);
     }
     
     function gt(n) {
@@ -1453,11 +1499,27 @@
       }
     
       function handleBg(input) {
-      const f = input.files; if (!f) return;
+      const f = input.files[0]; if (!f) return;
       bgT = f.type.startsWith('video') ? 'video' : 'image';
       const r = new FileReader();
-      r.onload = e => { bgD = e.target.result; renderBgPrev(); };
+      r.onload = e => { bgD = e.target.result; renderBgPrev(); renderDispPreview(); };
       r.readAsDataURL(f);
+      }
+
+      function handleBgDrop(ev) {
+        const f = ev.dataTransfer.files[0]; if (!f) return;
+        if (!f.type.startsWith('image') && !f.type.startsWith('video')) { toast('Solo imágenes o videos'); return; }
+        bgT = f.type.startsWith('video') ? 'video' : 'image';
+        const r = new FileReader();
+        r.onload = e => { bgD = e.target.result; renderBgPrev(); renderDispPreview(); };
+        r.readAsDataURL(f);
+      }
+
+      async function delEv(id) {
+        if (!confirm('¿Eliminar este evento y todos sus datos?')) return;
+        await db.del('events', id);
+        toast('Evento eliminado');
+        refresh();
       }
     
       function renderBgPrev() {
@@ -1795,18 +1857,22 @@
         name: document.getElementById('en').value,
         date: document.getElementById('ed').value,
         venue: document.getElementById('ev').value,
-        host_name: document.getElementById('eh').value,
+        address: '',
+        host: document.getElementById('eh').value,
         welcome_msg: document.getElementById('ew').value,
         type: document.getElementById('et').value,
         orientation: document.getElementById('eo').value,
-        tables_count: parseInt(document.getElementById('etn').value),
+        table_count: parseInt(document.getElementById('etn').value) || 20,
         bg_url: bgD,
         bg_type: bgT,
-        accent_color: selC,
-        animation_type: selA,
-        reveal_anim: document.getElementById('eta').value,
+        color: selC,
+        animation: selA,
+        table_anim: document.getElementById('eta').value,
         qr_size: qrSize,
-        guests_count: curGs.length
+        map_markers: JSON.stringify(mapMarkers),
+        map_scale: mScale,
+        map_pan_x: mPan.x,
+        map_pan_y: mPan.y
       };
 
       if (!data.name) { toast('Nombre requerido'); return; }
@@ -1814,48 +1880,49 @@
       let evId;
       if (curEv) {
         evId = curEv.id;
-        await db.patch('events', evId, data);
+        const res = await db.patch('events', evId, data);
+        if (res && res.length) curEv = res[0];
       } else {
         const res = await db.post('events', data);
-        evId = res.id;
+        if (!res || !res.length) { toast('Error al crear evento'); return; }
+        evId = res[0].id;
+        curEv = res[0];
       }
 
       await db.dw('guests', 'event_id', evId);
       for (const g of curGs) {
-        delete g.id;
-        g.event_id = evId;
-        await db.post('guests', g);
+        const gd = { event_id: evId, name: g.name, table_number: parseInt(g.table_number) };
+        await db.post('guests', gd);
       }
 
       await db.dw('table_layout', 'event_id', evId);
       for (const t of mapTs) {
-        delete t.id; delete t.created_at;
-        t.event_id = evId;
-        await db.post('table_layout', t);
+        const td = { event_id: evId, table_number: parseInt(t.table_number) || 1, x: t.x, y: t.y, shape: t.shape || 'round', label: t.label || null, color: t.color || null };
+        await db.post('table_layout', td);
       }
 
-      await db.dw('map_markers', 'event_id', evId);
-      for (const m of mapMarkers) {
-        delete m.id; delete m.created_at;
-        m.event_id = evId;
-        await db.post('map_markers', m);
-      }
-
-      toast('Evento guardado');
+      toast('✦ Evento guardado');
       closeModal();
       refresh();
     }
 
     function impCSV(input) {
-      const f = input.files; if (!f) return;
+      const f = input.files[0]; if (!f) return;
       const r = new FileReader();
       r.onload = e => {
         const lines = e.target.result.split('\n');
         lines.forEach(l => {
           const p = l.split(',');
-          if (p.length >= 2) curGs.push({ id: 'csv-' + Math.random(), name: p.trim(), table_number: p.trim() });
+          if (p.length >= 2) {
+            const name = p[0].trim();
+            const table = p[1].trim();
+            if (name && table && name.toLowerCase() !== 'nombre') {
+              curGs.push({ id: 'csv-' + Math.random(), name: name, table_number: parseInt(table) || 1 });
+            }
+          }
         });
         renderGs();
+        toast(curGs.length + ' invitados importados');
       };
       r.readAsText(f);
     }
