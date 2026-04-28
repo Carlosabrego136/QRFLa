@@ -1491,6 +1491,18 @@ function setMapEditMode(editing){
 
 function enableMapEdit(){
   setMapEditMode(true);
+  // Re-asegurar contexto del canvas por si initMap no terminó aún
+  if(!mctx){
+    mc=document.getElementById('map-canvas');
+    if(mc){
+      const w=document.getElementById('mw');
+      const rect=w.getBoundingClientRect();
+      mW=rect.width||w.offsetWidth||800;
+      mH=rect.height||w.offsetHeight||480;
+      mc.width=mW;mc.height=mH;
+      mctx=mc.getContext('2d');
+    }
+  }
   drawMap();
 }
 
