@@ -302,12 +302,13 @@
     }
 
     .res-inner {
-      background: rgba(255, 255, 255, .06);
-      backdrop-filter: blur(22px);
-      border: 1px solid rgba(201, 169, 110, .22);
-      padding: 1.8rem 1.6rem;
+      background: rgba(10, 10, 10, 0.82);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(201, 169, 110, 0.45);
+      padding: 2rem 1.8rem;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(201, 169, 110, 0.15);
     }
 
     .res-inner::before {
@@ -321,19 +322,22 @@
     }
 
     .res-greet {
-      font-size: .6rem;
+      font-size: .62rem;
       letter-spacing: .22em;
       text-transform: uppercase;
       color: var(--ac);
       margin-bottom: .4rem;
+      font-weight: 500;
     }
 
     .res-name {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.6rem, 6vw, 2.2rem);
-      font-weight: 200;
+      font-size: clamp(1.8rem, 6vw, 2.4rem);
+      font-weight: 300;
       line-height: 1.1;
       margin-bottom: 1.2rem;
+      color: #ffffff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
     }
 
     .res-name em {
@@ -355,25 +359,27 @@
     }
 
     .tbl-label {
-      font-size: .6rem;
+      font-size: .62rem;
       letter-spacing: .22em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, .4);
+      color: rgba(255, 255, 255, .75);
       margin-bottom: .5rem;
+      font-weight: 500;
     }
 
     .tbl-circle {
-      width: 110px;
-      height: 110px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      border: 1px solid var(--ac);
+      border: 2px solid var(--ac);
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(201, 169, 110, .06);
+      background: rgba(201, 169, 110, 0.15);
       position: relative;
       margin: 0 auto;
+      box-shadow: 0 0 28px rgba(201, 169, 110, 0.25), inset 0 0 18px rgba(201, 169, 110, 0.08);
     }
 
     .tbl-circle.glow {
@@ -427,10 +433,11 @@
 
     .tbl-n {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 2.6rem;
-      font-weight: 200;
+      font-size: 3rem;
+      font-weight: 300;
       color: #fff;
       line-height: 1;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
     }
 
     .tbl-w {
@@ -559,7 +566,7 @@
       font-family: 'Cormorant Garamond', serif;
       font-style: italic;
       font-size: 1rem;
-      color: rgba(255, 255, 255, .55);
+      color: rgba(255, 255, 255, .75);
       line-height: 1.6;
     }
 
