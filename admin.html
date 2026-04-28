@@ -1195,6 +1195,8 @@
             <input type="number" id="mtn" placeholder="# mesa" min="1" style="width:72px;padding:5px 9px;border:1px solid var(--line);font-size:0.8rem;outline:none;">
             <button class="btn bo bs" onclick="autoL()">⊞ Auto</button>
             <button class="btn bo bs" onclick="centerM()">⊡ Centrar</button>
+            <button class="btn bi bs" onclick="zoomIn()" title="Acercar">＋ Zoom</button>
+            <button class="btn bo bs" onclick="zoomOut()" title="Alejar">－ Zoom</button>
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
             <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
           </div>
@@ -1373,7 +1375,7 @@ async function editEv(id){
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
   // Load markers from event data (stored as JSON in map_markers column)
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
-  selMarker=null;
+  selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
   rGuests();
   document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
   gt(0);document.getElementById('modal').classList.add('open');
@@ -1448,9 +1450,16 @@ function initMap(){
   mW=w.clientWidth;mH=w.clientHeight;
   mc.width=mW;mc.height=mH;
   mctx=mc.getContext('2d');
-  if(!mapTs.length&&curEv===null)autoL();else drawMap();
+  if(!mapTs.length&&curEv===null){
+    autoL();
+  } else if(mapTs.length){
+    // Auto-centrar las mesas existentes para que se vean dentro del canvas
+    centerM();
+  } else {
+    drawMap();
+  }
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
-  mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.25,Math.min(4,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
+  mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
   mc.ontouchstart=e=>{e.preventDefault();const t=e.touches[0],r=mc.getBoundingClientRect(),mx=t.clientX-r.left,my=t.clientY-r.top;
     mDownX=mx;mDownY=my;mDownMoved=false;
     const hm=hitMarker(mx,my);
@@ -1473,6 +1482,7 @@ function initMap(){
     }
     mDrag=null;mMarkerDrag=null;};
   document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&document.getElementById('modal').classList.contains('open')){
+    if(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA')return;
     if(selMarker!==null){mapMarkers.splice(selMarker,1);selMarker=null;drawMap();}
     else if(selT){mapTs=mapTs.filter(t=>t!==selT);selT=null;drawMap();}
   }});
@@ -1650,8 +1660,26 @@ function drawMap(){
 }
 
 function autoL(){const n=parseInt(document.getElementById('etn').value)||20;mapTs=[];const cols=Math.ceil(Math.sqrt(n*1.3)),rows=Math.ceil(n/cols),cw=mW/cols,ch=mH/rows;for(let i=0;i<n;i++){const c=i%cols,ro=Math.floor(i/cols);mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});}drawMap();}
-function centerM(){mPan={x:0,y:0};mScale=1;drawMap();}
-function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];drawMap();}}
+
+function centerM(){
+  // Centrar la vista sobre las mesas existentes con padding
+  if(!mapTs.length&&!mapMarkers.length){mPan={x:0,y:0};mScale=1;drawMap();return;}
+  const allX=[...mapTs.map(t=>t.x),...mapMarkers.map(m=>m.x)];
+  const allY=[...mapTs.map(t=>t.y),...mapMarkers.map(m=>m.y)];
+  const minX=Math.min(...allX),maxX=Math.max(...allX);
+  const minY=Math.min(...allY),maxY=Math.max(...allY);
+  const pad=60;
+  const scX=(mW-pad*2)/((maxX-minX)||mW);
+  const scY=(mH-pad*2)/((maxY-minY)||mH);
+  mScale=Math.max(0.25,Math.min(3,Math.min(scX,scY)*0.9));
+  mPan.x=(mW-(maxX+minX)*mScale)/2;
+  mPan.y=(mH-(maxY+minY)*mScale)/2;
+  drawMap();
+}
+
+function zoomIn(){mScale=Math.min(5,mScale*1.25);drawMap();}
+function zoomOut(){mScale=Math.max(0.15,mScale*0.8);drawMap();}
+function clearM(){if(confirm('¿Limpiar mapa?')){mapTs=[];mapMarkers=[];drawMap();}}
 
 /* QR */
 function gURL(id){return`${location.origin}${location.pathname.replace('admin.html','guest.html')}?event=${id}`;}

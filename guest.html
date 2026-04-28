@@ -818,182 +818,155 @@ function drawGuestMap(highlightN){
   const canvas=document.getElementById('guest-map-canvas');
   const wrap=canvas.parentElement;
   const W=wrap.clientWidth;
+
   // Parse markers
   let markers=[];
   try{if(ev.map_markers)markers=JSON.parse(ev.map_markers);}catch(x){}
 
-  const allItems=[...layout,...markers];
   const hasItems=layout.length>0;
-  const H=Math.min(hasItems?420:200,W*.85);
-  canvas.width=W;canvas.height=H;canvas.style.height=H+'px';
+  // Altura suficiente — no se corte
+  const H=Math.min(Math.max(hasItems?380:180, W*0.7), 480);
+  canvas.width=W; canvas.height=H; canvas.style.height=H+'px';
   const ctx2=canvas.getContext('2d');
-  ctx2.clearRect(0,0,W,H);
 
   if(!hasItems){
-    ctx2.fillStyle='rgba(255,255,255,0.25)';
-    ctx2.font='13px DM Sans,sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
-    ctx2.fillText('Mapa no disponible',W/2,H/2);return;
+    ctx2.clearRect(0,0,W,H);
+    ctx2.fillStyle='rgba(255,255,255,0.2)';
+    ctx2.font='14px DM Sans,sans-serif';
+    ctx2.textAlign='center'; ctx2.textBaseline='middle';
+    ctx2.fillText('Mapa no disponible',W/2,H/2);
+    return;
   }
 
-  // Subtle dot grid background
-  ctx2.fillStyle='rgba(255,255,255,0.03)';
-  for(let x=0;x<W;x+=20)for(let y=0;y<H;y+=20){ctx2.beginPath();ctx2.arc(x,y,1,0,Math.PI*2);ctx2.fill();}
-
-  // Compute bounds including markers
+  // Calcular bounds incluyendo todos los elementos
   const allX=[...layout.map(t=>t.x),...markers.map(m=>m.x)];
   const allY=[...layout.map(t=>t.y),...markers.map(m=>m.y)];
-  const minX=Math.min(...allX),maxX=Math.max(...allX);
-  const minY=Math.min(...allY),maxY=Math.max(...allY);
+  const minX=Math.min(...allX), maxX=Math.max(...allX);
+  const minY=Math.min(...allY), maxY=Math.max(...allY);
+  const rangeX=maxX-minX||1, rangeY=maxY-minY||1;
+
+  // Escala que asegura que TODO cabe dentro con padding generoso
   const pad=40;
-  const scX=(W-pad*2)/(maxX-minX||1);
-  const scY=(H-pad*2)/(maxY-minY||1);
-  const sc=Math.min(scX,scY)*.85;
-  const offX=pad+(W-pad*2-(maxX-minX)*sc)/2-minX*sc;
-  const offY=pad+(H-pad*2-(maxY-minY)*sc)/2-minY*sc;
+  const scX=(W-pad*2)/rangeX;
+  const scY=(H-pad*2)/rangeY;
+  const sc=Math.min(scX,scY)*0.88;
+
+  // Centrado exacto
+  const usedW=rangeX*sc, usedH=rangeY*sc;
+  const offX=(W-usedW)/2 - minX*sc;
+  const offY=(H-usedH)/2 - minY*sc;
 
   function tx(x){return x*sc+offX;}
   function ty(y){return y*sc+offY;}
-  const r=Math.max(9,Math.min(18,sc*16));
+
+  // Tamaño de mesa proporcional, legible
+  const r=Math.max(10,Math.min(22,sc*18));
   const ac2=ev.color||'#b8973a';
 
-  // Draw markers BEHIND tables
-  markers.forEach(m=>{
-    const x=tx(m.x),y=ty(m.y);
-    const col=GM_COLORS[m.type]||'#888';
-    const mr=Math.max(14,r*1.4);
-    ctx2.save();
-    // Glow halo
-    ctx2.shadowBlur=16;ctx2.shadowColor=col+'88';
-    ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);
-    ctx2.fillStyle=col+'33';ctx2.fill();
-    ctx2.shadowBlur=0;
-    ctx2.strokeStyle=col;ctx2.lineWidth=1.5;
-    ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);ctx2.stroke();
-    // Emoji icon
-    const emojiSz=Math.max(13,mr*1.05);
-    ctx2.font=`${emojiSz}px serif`;
-    ctx2.textAlign='center';ctx2.textBaseline='middle';
-    ctx2.fillText(GM_ICONS[m.type]||'📍',x,y);
-    // Label pill below
-    const lbl=m.customLabel||GM_LABELS[m.type]||m.type;
-    const labelY=y+mr+9;
-    ctx2.font=`bold ${Math.max(7,9*Math.min(sc,1))}px 'DM Sans',sans-serif`;
-    ctx2.textBaseline='top';
-    const lw=ctx2.measureText(lbl).width+10;
-    ctx2.fillStyle='rgba(0,0,0,0.6)';
-    ctx2.beginPath();ctx2.roundRect?ctx2.roundRect(x-lw/2,labelY-1,lw,13,3):ctx2.fillRect(x-lw/2,labelY-1,lw,13);
-    ctx2.fill();
-    ctx2.fillStyle=col;
-    ctx2.fillText(lbl,x,labelY);
-    ctx2.restore();
-  });
-
-  // Draw tables (animated loop for highlight)
-  let pf=0;
-  function mapLoop(){
-    if(!foundTable||!document.getElementById('guest-map-canvas'))return;
-    pf=(pf+0.035)%(Math.PI*2);
+  function drawFrame(pf){
     ctx2.clearRect(0,0,W,H);
-    // Redraw dot grid
-    ctx2.fillStyle='rgba(255,255,255,0.03)';
-    for(let x=0;x<W;x+=20)for(let y=0;y<H;y+=20){ctx2.beginPath();ctx2.arc(x,y,1,0,Math.PI*2);ctx2.fill();}
-    // Redraw markers
+
+    // Fondo oscuro semitransparente para que se vea bien
+    ctx2.fillStyle='rgba(5,5,15,0.82)';
+    ctx2.fillRect(0,0,W,H);
+
+    // Grid de puntos sutil
+    ctx2.fillStyle='rgba(255,255,255,0.04)';
+    for(let x=0;x<W;x+=22)for(let y=0;y<H;y+=22){
+      ctx2.beginPath();ctx2.arc(x,y,1,0,Math.PI*2);ctx2.fill();
+    }
+
+    // ── MARCADORES ──
     markers.forEach(m=>{
-      const x=tx(m.x),y=ty(m.y);
+      const x=tx(m.x), y=ty(m.y);
       const col=GM_COLORS[m.type]||'#888';
-      const mr=Math.max(14,r*1.4);
+      const mr=Math.max(16,r*1.3);
       ctx2.save();
-      ctx2.shadowBlur=12;ctx2.shadowColor=col+'66';
-      ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);
-      ctx2.fillStyle=col+'30';ctx2.fill();
+      ctx2.shadowBlur=14; ctx2.shadowColor=col+'88';
+      ctx2.beginPath(); ctx2.arc(x,y,mr,0,Math.PI*2);
+      ctx2.fillStyle=col+'44'; ctx2.fill();
       ctx2.shadowBlur=0;
-      ctx2.strokeStyle=col;ctx2.lineWidth=1.5;
-      ctx2.beginPath();ctx2.arc(x,y,mr,0,Math.PI*2);ctx2.stroke();
-      const emojiSz=Math.max(13,mr*1.05);
+      ctx2.strokeStyle=col; ctx2.lineWidth=2;
+      ctx2.beginPath(); ctx2.arc(x,y,mr,0,Math.PI*2); ctx2.stroke();
+      // Emoji
+      const emojiSz=Math.max(14,mr*0.95);
       ctx2.font=`${emojiSz}px serif`;
-      ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.textAlign='center'; ctx2.textBaseline='middle';
       ctx2.fillText(GM_ICONS[m.type]||'📍',x,y);
+      // Etiqueta fondo oscuro
       const lbl=m.customLabel||GM_LABELS[m.type]||m.type;
-      const labelY=y+mr+9;
-      ctx2.font=`bold ${Math.max(7,9*Math.min(sc,1))}px 'DM Sans',sans-serif`;
+      const labelY=y+mr+10;
+      ctx2.font=`bold ${Math.max(8,10)}px DM Sans,sans-serif`;
       ctx2.textBaseline='top';
       const lw=ctx2.measureText(lbl).width+10;
-      ctx2.fillStyle='rgba(0,0,0,0.6)';ctx2.fillRect(x-lw/2,labelY-1,lw,13);
-      ctx2.fillStyle=col;ctx2.fillText(lbl,x,labelY);
+      ctx2.fillStyle='rgba(0,0,0,0.75)';
+      ctx2.fillRect(x-lw/2,labelY-1,lw,14);
+      ctx2.fillStyle=col;
+      ctx2.fillText(lbl,x,labelY);
       ctx2.restore();
     });
-    // Draw tables
+
+    // ── MESAS ──
     layout.forEach(t=>{
-      const x=tx(t.x),y=ty(t.y);
+      const x=tx(t.x), y=ty(t.y);
       const isHL=t.table_number===highlightN;
-      ctx2.save();
-      if(isHL){
-        // Animated pulse ring
-        const pr=r+5+Math.sin(pf)*4;
-        ctx2.globalAlpha=0.3+Math.sin(pf)*0.2;
-        ctx2.beginPath();ctx2.arc(x,y,pr,0,Math.PI*2);
-        ctx2.strokeStyle=ac2;ctx2.lineWidth=2;ctx2.stroke();
-        ctx2.globalAlpha=1;
-        ctx2.shadowBlur=22;ctx2.shadowColor=ac2;
-      }
       const shape=t.shape||'round';
-      const fill=isHL?ac2:'rgba(255,255,255,0.1)';
-      const stroke=isHL?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.12)';
+      ctx2.save();
+
+      if(isHL){
+        // Anillo pulsante
+        if(pf!==undefined){
+          const pr=r+5+Math.sin(pf)*4;
+          ctx2.globalAlpha=0.35+Math.sin(pf)*0.2;
+          ctx2.beginPath();ctx2.arc(x,y,pr,0,Math.PI*2);
+          ctx2.strokeStyle=ac2;ctx2.lineWidth=2.5;ctx2.stroke();
+          ctx2.globalAlpha=1;
+        }
+        ctx2.shadowBlur=24; ctx2.shadowColor=ac2;
+      }
+
+      const fill=isHL?ac2:'rgba(255,255,255,0.13)';
+      const stroke=isHL?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.18)';
+      const lw2=isHL?1.5:1;
+
       if(shape==='rect'){
-        ctx2.fillStyle=fill;ctx2.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
-        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
+        ctx2.fillStyle=fill;ctx2.fillRect(x-r*1.35,y-r*.65,r*2.7,r*1.3);
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.strokeRect(x-r*1.35,y-r*.65,r*2.7,r*1.3);
       } else if(shape==='oval'){
-        ctx2.beginPath();ctx2.ellipse(x,y,r*1.4,r*.8,0,0,Math.PI*2);
-        ctx2.fillStyle=fill;ctx2.fill();
-        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+        ctx2.beginPath();ctx2.ellipse(x,y,r*1.45,r*.82,0,0,Math.PI*2);
+        ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.stroke();
       } else if(shape==='square'){
         ctx2.fillStyle=fill;ctx2.fillRect(x-r,y-r,r*2,r*2);
-        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r,y-r,r*2,r*2);
+        ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.strokeRect(x-r,y-r,r*2,r*2);
       } else {
         ctx2.beginPath();ctx2.arc(x,y,r,0,Math.PI*2);
-        ctx2.fillStyle=fill;ctx2.fill();
-        ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+        ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.stroke();
       }
       ctx2.shadowBlur=0;
-      ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.45)';
-      ctx2.font=`${isHL?Math.max(7,r*.68):Math.max(6,r*.55)}px 'DM Mono',monospace`;
+      // Número de mesa — más grande y legible
+      ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.6)';
+      ctx2.font=`${isHL?'bold ':''} ${Math.max(8,r*0.7)}px DM Mono,monospace`;
       ctx2.textAlign='center';ctx2.textBaseline='middle';
       ctx2.fillText(t.label||t.table_number,x,y);
       ctx2.restore();
     });
-    requestAnimationFrame(mapLoop);
   }
-  // Static first draw for tables (before animation loop)
-  layout.forEach(t=>{
-    const x=tx(t.x),y=ty(t.y);
-    const isHL=t.table_number===highlightN;
-    ctx2.save();
-    if(isHL){ctx2.shadowBlur=22;ctx2.shadowColor=ac2;}
-    const shape=t.shape||'round';
-    const fill=isHL?ac2:'rgba(255,255,255,0.1)';
-    const stroke=isHL?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.12)';
-    if(shape==='rect'){
-      ctx2.fillStyle=fill;ctx2.fillRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
-      ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r*1.3,y-r*.6,r*2.6,r*1.2);
-    } else if(shape==='oval'){
-      ctx2.beginPath();ctx2.ellipse(x,y,r*1.4,r*.8,0,0,Math.PI*2);
-      ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
-    } else if(shape==='square'){
-      ctx2.fillStyle=fill;ctx2.fillRect(x-r,y-r,r*2,r*2);
-      ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.strokeRect(x-r,y-r,r*2,r*2);
-    } else {
-      ctx2.beginPath();ctx2.arc(x,y,r,0,Math.PI*2);
-      ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=1;ctx2.stroke();
+
+  // Draw estático primero
+  drawFrame(undefined);
+
+  // Loop animado para el pulso de la mesa resaltada
+  if(highlightN){
+    let pf=0;
+    let rafId;
+    function loop(){
+      if(!foundTable||!document.getElementById('guest-map-canvas')){cancelAnimationFrame(rafId);return;}
+      pf=(pf+0.04)%(Math.PI*2);
+      drawFrame(pf);
+      rafId=requestAnimationFrame(loop);
     }
-    ctx2.shadowBlur=0;
-    ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.45)';
-    ctx2.font=`${isHL?Math.max(7,r*.68):Math.max(6,r*.55)}px 'DM Mono',monospace`;
-    ctx2.textAlign='center';ctx2.textBaseline='middle';
-    ctx2.fillText(t.label||t.table_number,x,y);
-    ctx2.restore();
-  });
-  // Start animated loop for highlighted table pulse
-  if(highlightN) mapLoop();
+    loop();
+  }
 }
 
 /* ── AMBIENT ANIMATION ── */
