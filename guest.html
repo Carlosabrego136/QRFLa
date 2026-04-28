@@ -943,11 +943,20 @@ function drawGuestMap(highlightN){
         ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.stroke();
       }
       ctx2.shadowBlur=0;
-      // Número de mesa — más grande y legible
-      ctx2.fillStyle=isHL?'#fff':'rgba(255,255,255,0.6)';
-      ctx2.font=`${isHL?'bold ':''} ${Math.max(8,r*0.7)}px DM Mono,monospace`;
+      // Label with offset support (label_offset_x/y from DB)
+      const lox=(t.label_offset_x||0)*sc, loy=(t.label_offset_y||0)*sc;
+      const lx=x+lox, ly=y+loy;
+      const fs=Math.max(8,r*0.7);
+      ctx2.font=`${isHL?'bold ':''} ${fs}px DM Mono,monospace`;
       ctx2.textAlign='center';ctx2.textBaseline='middle';
-      ctx2.fillText(t.label||t.table_number,x,y);
+      const txt=String(t.label||t.table_number);
+      if(lox!==0||loy!==0){
+        ctx2.beginPath();ctx2.moveTo(x,y);ctx2.lineTo(lx,ly);
+        ctx2.strokeStyle=isHL?'rgba(255,255,255,0.4)':'rgba(255,255,255,0.2)';
+        ctx2.lineWidth=0.8;ctx2.setLineDash([3,3]);ctx2.stroke();ctx2.setLineDash([]);
+      }
+      ctx2.fillStyle=isHL?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.6)';
+      ctx2.fillText(txt,lx,ly);
       ctx2.restore();
     });
   }

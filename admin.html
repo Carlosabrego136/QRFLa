@@ -1325,13 +1325,16 @@
             <button class="fs-btn" onclick="zoomIn()">＋ Zoom</button>
             <button class="fs-btn" onclick="zoomOut()">－ Zoom</button>
             <button class="fs-btn" onclick="clearM()">✕ Limpiar</button>
+            <button class="fs-btn active" onclick="saveMap()" style="background:var(--gold);border-color:var(--gold);">✦ Guardar Mapa</button>
             <div class="fs-sep"></div>
             <span style="font-size:0.6rem;opacity:0.5;">Clic = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
             <button class="fs-btn fs-close" onclick="toggleFullscreen()">✕ Cerrar</button>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;">
+          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
             <button class="btn bo" onclick="gt(2)">← Anterior</button>
+            <button class="btn bg" onclick="saveMap()" id="btn-save-map">✦ Guardar Mapa</button>
             <button class="btn bi" onclick="gt(4)">Siguiente →</button>
+            <span id="map-save-status" style="font-size:0.68rem;color:var(--gray);margin-left:4px;"></span>
           </div>
         </div>
 
@@ -1529,6 +1532,38 @@ async function saveEv(){
     })));
   }
   closeModal();toast('✦ Evento guardado');loadDash();
+}
+
+async function saveMap(){
+  if(!curEv){toast('Guarda el evento primero (pestaña QR & Guardar)');return;}
+  const btn=document.getElementById('btn-save-map');
+  const status=document.getElementById('map-save-status');
+  if(btn)btn.disabled=true;
+  if(status)status.textContent='Guardando...';
+  try{
+    await db.patch('events',curEv.id,{map_markers:JSON.stringify(mapMarkers),map_scale:mScale,map_pan_x:mPan.x,map_pan_y:mPan.y});
+    await db.dw('table_layout','event_id',curEv.id);
+    if(mapTs.length){
+      await db.post('table_layout',mapTs.map(t=>({
+        event_id:curEv.id,
+        table_number:t.table_number,
+        x:parseFloat(t.x.toFixed(4)),
+        y:parseFloat(t.y.toFixed(4)),
+        shape:t.shape||mShape,
+        label:t.label||String(t.table_number),
+        label_offset_x:parseFloat((t.labelOffsetX||0).toFixed(4)),
+        label_offset_y:parseFloat((t.labelOffsetY||0).toFixed(4))
+      })));
+    }
+    if(status)status.textContent='✓ Mapa guardado';
+    toast('✦ Mapa guardado — visible para invitados');
+    setTimeout(()=>{if(status)status.textContent='';},3000);
+  }catch(err){
+    if(status)status.textContent='Error al guardar';
+    toast('Error al guardar el mapa');
+  }finally{
+    if(btn)btn.disabled=false;
+  }
 }
 
 async function delEv(id){
