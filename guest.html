@@ -660,14 +660,15 @@
         </div>
         <div class="res-actions">
           <button class="btn-ac btn-out" onclick="resetSearch()">🔍 Buscar otro</button>
-          <button class="btn-ac btn-main" onclick="toggleMap()">🗺 Ver mapa de mesas</button>
+          <button class="btn-ac btn-main" onclick="toggleMap()">🗺 Mapa de mesas</button>
         </div>
       </div>
     </div>
 
     <!-- MAP -->
     <div class="map-section" id="map-section">
-      <div class="map-body open" id="map-body">
+      <button class="map-toggle" id="map-toggle-btn" onclick="toggleMap()">🗺 Ver mapa de mesas ▾</button>
+      <div class="map-body" id="map-body">
         <canvas id="guest-map-canvas"></canvas>
         <div class="map-legend">Tu mesa está <span>resaltada</span> — los iconos muestran entradas, escenario y más
         </div>
@@ -781,11 +782,25 @@ function showResult(name,tnum){
   document.getElementById('map-section').style.display='block';
   document.getElementById('again').style.display='block';
 
+  // Auto-open map
+  const mapBody=document.getElementById('map-body');
+  mapBody.classList.add('open');
+  const btn=document.getElementById('map-toggle-btn');
+  if(btn) btn.textContent='🗺 Ver mapa de mesas ▴';
+
   // Trigger celebration animation
   triggerCelebration();
 
-  // Draw map with highlight
-  setTimeout(()=>{drawGuestMap(tnum);},200);
+  // Draw map — esperar a que el DOM tenga dimensiones reales
+  setTimeout(()=>{
+    const canvas=document.getElementById('guest-map-canvas');
+    const wrap=canvas.parentElement;
+    if(wrap.clientWidth>0){
+      drawGuestMap(tnum);
+    } else {
+      setTimeout(()=>drawGuestMap(tnum),300);
+    }
+  },100);
 
   setTimeout(()=>document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'}),150);
 }
@@ -793,7 +808,13 @@ function showResult(name,tnum){
 function toggleMap(){
   const body=document.getElementById('map-body');
   body.classList.toggle('open');
-  if(body.classList.contains('open')&&foundTable) drawGuestMap(foundTable);
+  const btn=document.getElementById('map-toggle-btn');
+  const isOpen=body.classList.contains('open');
+  if(btn) btn.textContent=isOpen?'🗺 Ver mapa de mesas ▴':'🗺 Ver mapa de mesas ▾';
+  if(isOpen&&foundTable){
+    // Redibujar con un pequeño delay para que el elemento tenga dimensiones
+    setTimeout(()=>drawGuestMap(foundTable),50);
+  }
 }
 
 function resetSearch(){
@@ -803,6 +824,8 @@ function resetSearch(){
   document.getElementById('again').style.display='none';
   document.getElementById('not-found').style.display='none';
   document.getElementById('map-body').classList.remove('open');
+  const btn=document.getElementById('map-toggle-btn');
+  if(btn) btn.textContent='🗺 Ver mapa de mesas ▾';
   foundTable=null;
   stopCelebration();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -943,8 +966,8 @@ function drawGuestMap(highlightN){
         ctx2.fillStyle=fill;ctx2.fill();ctx2.strokeStyle=stroke;ctx2.lineWidth=lw2;ctx2.stroke();
       }
       ctx2.shadowBlur=0;
-      // Label with offset support (label_offset_x/y from DB)
-      const lox=(t.label_offset_x||0)*sc, loy=(t.label_offset_y||0)*sc;
+      // Label with offset support
+      const lox=(t.label_offset_x||t.labelOffsetX||0)*sc, loy=(t.label_offset_y||t.labelOffsetY||0)*sc;
       const lx=x+lox, ly=y+loy;
       const fs=Math.max(8,r*0.7);
       ctx2.font=`${isHL?'bold ':''} ${fs}px DM Mono,monospace`;
