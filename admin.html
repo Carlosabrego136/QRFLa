@@ -1417,6 +1417,8 @@ async function editEv(id){
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
+  // Forzar x,y como números (Supabase a veces los devuelve como strings)
+  mapTs=mapTs.map(t=>({...t,x:parseFloat(t.x),y:parseFloat(t.y)}));
   // Load markers from event data (stored as JSON in map_markers column)
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
   selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
@@ -1560,7 +1562,13 @@ function initMap(){
       autoL();
     } else if(curEv&&mapTs.length){
       // Evento existente con mesas — mostrar tal como se guardó, en modo vista
-      setMapEditMode(false);
+      // Forzar visibilidad del aviso antes del rAF por si había delay
+      const vb=document.getElementById('map-view-bar');
+      const ec=document.getElementById('map-edit-controls');
+      if(vb){vb.style.display='flex';}
+      if(ec){ec.style.display='none';}
+      const canvas=document.getElementById('map-canvas');
+      if(canvas){canvas.style.cursor='default';canvas.style.pointerEvents='none';}
       centerM();
     } else {
       // Evento existente sin mesas aún — activar edición directo
