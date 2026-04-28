@@ -1489,6 +1489,8 @@ async function editEv(id){
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
+  // Cargar offsets de etiquetas desde la DB
+  mapTs=mapTs.map(t=>({...t,labelOffsetX:t.label_offset_x||0,labelOffsetY:t.label_offset_y||0}));
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
   // Cargar scale y pan del evento
   mScale=curEv.map_scale||1;
@@ -1521,7 +1523,9 @@ async function saveEv(){
       x:parseFloat(t.x.toFixed(4)),
       y:parseFloat(t.y.toFixed(4)),
       shape:t.shape||mShape,
-      label:t.label||String(t.table_number)
+      label:t.label||String(t.table_number),
+      label_offset_x:parseFloat((t.labelOffsetX||0).toFixed(4)),
+      label_offset_y:parseFloat((t.labelOffsetY||0).toFixed(4))
     })));
   }
   closeModal();toast('✦ Evento guardado');loadDash();
@@ -1625,6 +1629,7 @@ function initMap(){
 }
 
 let mMarkerDrag=null,mMarkerSx=0,mMarkerSy=0,mDownX=0,mDownY=0,mDownMoved=false;
+let mLabelDrag=null,mLabelSx=0,mLabelSy=0; // arrastre de etiqueta de mesa
 
 function mdStart(e){
   const{mx,my}=mc2(e);
@@ -1650,6 +1655,17 @@ function mdStart(e){
   }
 
   selMarker=null;
+
+  // Check if clicking a table label first (priority over table body)
+  const hitLabelT=mapTs.find(t=>hitLabel(t,mx,my));
+  if(hitLabelT){
+    mLabelDrag=hitLabelT;selT=hitLabelT;
+    const ox=(hitLabelT.labelOffsetX||0)*mScale, oy=(hitLabelT.labelOffsetY||0)*mScale;
+    mLabelSx=mx-(hitLabelT.x*mScale+mPan.x+ox);
+    mLabelSy=my-(hitLabelT.y*mScale+mPan.y+oy);
+    drawMap();return;
+  }
+
   const hit=mapTs.find(t=>hitT(t,mx,my));
   if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
 
@@ -1658,7 +1674,7 @@ function mdStart(e){
   selT=null;
   const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
   const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
-  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
+  mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn),labelOffsetX:0,labelOffsetY:0});
   document.getElementById('mtn').value=tn+1;
   drawMap();
 }
@@ -1676,12 +1692,18 @@ function mdMove(e){
   const{mx,my}=mc2(e);
   if(Math.hypot(mx-mDownX,my-mDownY)>5) mDownMoved=true;
   if(mMarkerDrag){mMarkerDrag.x=(mx-mMarkerSx)/mScale;mMarkerDrag.y=(my-mMarkerSy)/mScale;drawMap();return;}
+  if(mLabelDrag){
+    const newPx=mx-mLabelSx, newPy=my-mLabelSy;
+    mLabelDrag.labelOffsetX=(newPx-mLabelDrag.x*mScale-mPan.x)/mScale;
+    mLabelDrag.labelOffsetY=(newPy-mLabelDrag.y*mScale-mPan.y)/mScale;
+    drawMap();return;
+  }
   if(!mDrag)return;
   mDrag.x=(mx-mSx)/mScale;mDrag.y=(my-mSy)/mScale;drawMap();
 }
 function mdUp(e){
   const{mx,my}=mc2(e);
-  if(entryMode&&!mDownMoved&&mMarkerDrag===null){
+  if(entryMode&&!mDownMoved&&mMarkerDrag===null&&mLabelDrag===null){
     const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
     mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
     selMarker=mapMarkers.length-1;
@@ -1694,12 +1716,30 @@ function mdUp(e){
       if(newLabel!==null)mMarkerDrag.customLabel=newLabel;
     }
   }
-  mDrag=null;mMarkerDrag=null;
+  // Doble-clic en mesa sin mover = editar etiqueta de mesa
+  if(!mDownMoved&&mDrag!==null&&mLabelDrag===null){
+    const newLabel=prompt('Etiqueta de la mesa:',mDrag.label||String(mDrag.table_number));
+    if(newLabel!==null)mDrag.label=newLabel;
+    drawMap();
+  }
+  mDrag=null;mMarkerDrag=null;mLabelDrag=null;
 }
 function mc2(e){const r=mc.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
 function hitT(t,mx,my){const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale);
   if(t.shape==='rect'||t.shape==='square') return mx>=x-r*1.4&&mx<=x+r*1.4&&my>=y-r*.75&&my<=y+r*.75;
   return Math.hypot(mx-x,my-y)<=r;}
+
+function hitLabel(t,mx,my){
+  const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y;
+  const ox=(t.labelOffsetX||0)*mScale, oy=(t.labelOffsetY||0)*mScale;
+  const lx=x+ox, ly=y+oy;
+  const fs=Math.max(8,10*mScale);
+  mctx.font=`${fs}px 'DM Mono',monospace`;
+  const txt=String(t.label||t.table_number);
+  const tw=mctx.measureText(txt).width+6;
+  const th=fs+4;
+  return mx>=lx-tw/2&&mx<=lx+tw/2&&my>=ly-th/2&&my<=ly+th/2;
+}
 
 function drawMap(){
   if(!mctx)return;
@@ -1748,6 +1788,7 @@ function drawMap(){
   // Draw tables
   mapTs.forEach(t=>{
     const x=t.x*mScale+mPan.x,y=t.y*mScale+mPan.y,r=Math.max(14,20*mScale),isSel=selT===t;
+    const isLabelSel=mLabelDrag===t;
     mctx.save();
     if(isSel){mctx.shadowBlur=14;mctx.shadowColor='rgba(184,151,58,0.5)';}
     const shape=t.shape||mShape;
@@ -1774,10 +1815,31 @@ function drawMap(){
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
       mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
     }
-    mctx.fillStyle='#fff';
-    mctx.font=`${Math.max(8,10*mScale)}px 'DM Mono',monospace`;
+    // Draw label with offset
+    const ox=(t.labelOffsetX||0)*mScale, oy=(t.labelOffsetY||0)*mScale;
+    const lx=x+ox, ly=y+oy;
+    const fs=Math.max(8,10*mScale);
+    mctx.font=`${fs}px 'DM Mono',monospace`;
     mctx.textAlign='center';mctx.textBaseline='middle';
-    mctx.fillText(t.label||t.table_number,x,y);
+    const txt=String(t.label||t.table_number);
+    const tw=mctx.measureText(txt).width+6;
+    const th=fs+4;
+    // Label background
+    mctx.fillStyle=isLabelSel?'#b8973a':'rgba(255,255,255,0.92)';
+    mctx.fillRect(lx-tw/2,ly-th/2,tw,th);
+    // Label border
+    mctx.strokeStyle=isLabelSel?'#b8973a':'rgba(0,0,0,0.15)';
+    mctx.lineWidth=isLabelSel?1.5:0.5;
+    mctx.strokeRect(lx-tw/2,ly-th/2,tw,th);
+    // Label text
+    mctx.fillStyle=isLabelSel?'#fff':'#0a0a0a';
+    mctx.fillText(txt,lx,ly);
+    // Line from table to label if offset
+    if(Math.abs(t.labelOffsetX||0)>5||Math.abs(t.labelOffsetY||0)>5){
+      mctx.beginPath();mctx.moveTo(x,y);mctx.lineTo(lx,ly);
+      mctx.strokeStyle='rgba(184,151,58,0.35)';mctx.lineWidth=1;
+      mctx.setLineDash([3,3]);mctx.stroke();mctx.setLineDash([]);
+    }
     mctx.restore();
   });
 }
@@ -1791,7 +1853,7 @@ function autoL(){
   const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
   for(let i=0;i<n;i++){
     const c=i%cols, ro=Math.floor(i/cols);
-    mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
+    mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1),labelOffsetX:0,labelOffsetY:0});
   }
   centerM();
 }
