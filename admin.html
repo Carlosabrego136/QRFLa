@@ -614,7 +614,7 @@
     .map-wrap {
       position: relative;
       width: 100%;
-      height: 480px;
+      height: 600px;
       border: 1px solid var(--line);
       background: var(--paper);
       overflow: hidden;
@@ -982,6 +982,25 @@
       color: var(--ink);
       min-width: 42px;
     }
+
+    /* Aviso AUTO */
+    .map-hint {
+      background: #fef8f0;
+      border: 1px solid #fed7aa;
+      padding: 10px 14px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .map-hint-icon {
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 
@@ -1200,6 +1219,10 @@
             <button class="btn bo bs" onclick="clearM()">✕ Limpiar</button>
             <span style="font-size:0.62rem;color:var(--gray);margin-left:auto;">Clic vacío = agregar · Arrastra = mover · Scroll = zoom · Supr = borrar</span>
           </div>
+          <div class="map-hint">
+            <span class="map-hint-icon">ℹ️</span>
+            <span><strong>Consejo:</strong> Presiona <strong>"⊞ Auto"</strong> para reacomodar automáticamente todas las mesas</span>
+          </div>
           <div class="map-entry-row">
             <label>Marcadores:</label>
             <div class="entry-btn" id="btn-entry" onclick="toggleEntryMode('entry')">🚪 Entrada</div>
@@ -1277,8 +1300,8 @@ const db={
 let evs=[],curEv=null,curGs=[],mapTs=[],bgD=null,bgT=null,selC='#b8973a',selA='particles';
 let ctab=0,mShape='round',mScale=1,mPan={x:0,y:0},selT=null,mDrag=null,mSx=0,mSy=0;
 let mc,mctx,mW,mH;
-let entryMode=null; // 'entry','exit','stage','bar','dance'
-let mapMarkers=[]; // {type, x, y, label}
+let entryMode=null;
+let mapMarkers=[];
 let qrSize=200;
 
 /* NAV */
@@ -1373,9 +1396,11 @@ async function editEv(id){
   curGs=await db.get('guests',`event_id=eq.${id}`);
   curGs=curGs.map(g=>({name:g.name,table_number:g.table_number}));
   mapTs=await db.get('table_layout',`event_id=eq.${id}`);
-  // Load markers from event data (stored as JSON in map_markers column)
   mapMarkers=curEv.map_markers?JSON.parse(curEv.map_markers):[];
-  selMarker=null; selT=null; mScale=1; mPan={x:0,y:0};
+  // Cargar scale y pan del evento
+  mScale=curEv.map_scale||1;
+  mPan={x:curEv.map_pan_x||0,y:curEv.map_pan_y||0};
+  selMarker=null; selT=null;
   rGuests();
   document.getElementById('mo-title').innerHTML='Editar <em>Evento</em>';
   gt(0);document.getElementById('modal').classList.add('open');
@@ -1386,7 +1411,7 @@ async function saveEv(){
   const name=document.getElementById('en').value.trim();
   if(!name){toast('Ingresa el nombre');gt(0);return;}
   toast('Guardando...');
-  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers)};
+  const data={name,type:document.getElementById('et').value,date:document.getElementById('ed').value,venue:document.getElementById('ev').value,host:document.getElementById('eh').value,welcome_msg:document.getElementById('ew').value,table_count:parseInt(document.getElementById('etn').value)||20,orientation:document.getElementById('eo').value,color:selC,animation:selA,table_anim:document.getElementById('eta').value,bg_url:bgD,bg_type:bgT,qr_size:qrSize,map_markers:JSON.stringify(mapMarkers),map_scale:mScale,map_pan_x:mPan.x,map_pan_y:mPan.y};
   let eid;
   if(curEv){
     await db.patch('events',curEv.id,data);eid=curEv.id;
@@ -1397,9 +1422,6 @@ async function saveEv(){
   }
   if(curGs.length&&eid) await db.post('guests',curGs.map(g=>({event_id:eid,name:g.name,table_number:g.table_number})));
   if(mapTs.length&&eid){
-    // Normalizar coordenadas a espacio lógico antes de guardar
-    // Las coords en el canvas dependen de mScale/mPan, necesitamos las lógicas puras
-    // t.x y t.y ya son lógicas (se dividen por mScale al mover), guardarlas directo
     await db.post('table_layout',mapTs.map(t=>({
       event_id:eid,
       table_number:t.table_number,
@@ -1464,9 +1486,12 @@ function initMap(){
   mctx=mc.getContext('2d');
   if(!mapTs.length&&curEv===null){
     autoL();
+  } else if(curEv!==null){
+    // Modo edición: usar scale/pan guardados
+    drawMap();
   } else {
-    // Siempre centrar — funciona tanto para mesas nuevas como cargadas de DB
-    setTimeout(()=>centerM(), 50); // pequeño delay para que mW/mH estén listos
+    // Primero centrar
+    setTimeout(()=>centerM(), 50);
   }
   mc.onmousedown=mdStart;mc.onmousemove=mdMove;mc.onmouseup=mdUp;
   mc.onwheel=e=>{e.preventDefault();mScale=Math.max(0.15,Math.min(5,mScale*(e.deltaY<0?1.1:0.9)));drawMap();};
@@ -1504,7 +1529,6 @@ function mdStart(e){
   const{mx,my}=mc2(e);
   mDownX=mx;mDownY=my;mDownMoved=false;
 
-  // Check if clicking delete X of selected marker first
   if(selMarker!==null){
     const m=mapMarkers[selMarker];
     const r=Math.max(26,32*mScale);
@@ -1515,7 +1539,6 @@ function mdStart(e){
     }
   }
 
-  // Check if hitting an existing marker — allow dragging it
   const hm=hitMarker(mx,my);
   if(hm!==-1){
     mMarkerDrag=mapMarkers[hm];
@@ -1526,17 +1549,13 @@ function mdStart(e){
   }
 
   selMarker=null;
-  // Check if hitting a table — allow dragging it regardless of entryMode
   const hit=mapTs.find(t=>hitT(t,mx,my));
   if(hit){mDrag=hit;selT=hit;mSx=mx-hit.x*mScale;mSy=my-hit.y*mScale;drawMap();return;}
 
-  // If entryMode active and no marker/table hit, we'll place new marker on mouseup (if not dragged)
   if(entryMode){ selT=null; drawMap(); return; }
 
-  // No entryMode — place new table
   selT=null;
   const tn=parseInt(document.getElementById('mtn').value)||(mapTs.length?Math.max(...mapTs.map(t=>t.table_number))+1:1);
-  // Coordenada lógica = (pixel - pan) / scale
   const rx=(mx-mPan.x)/mScale, ry=(my-mPan.y)/mScale;
   mapTs.push({table_number:tn,x:rx,y:ry,shape:mShape,label:String(tn)});
   document.getElementById('mtn').value=tn+1;
@@ -1561,14 +1580,12 @@ function mdMove(e){
 }
 function mdUp(e){
   const{mx,my}=mc2(e);
-  // Place new marker only if entryMode active and didn't drag and didn't hit existing marker
   if(entryMode&&!mDownMoved&&mMarkerDrag===null){
     const rx=(mx-mPan.x)/mScale,ry=(my-mPan.y)/mScale;
     mapMarkers.push({type:entryMode,x:rx,y:ry,customLabel:''});
     selMarker=mapMarkers.length-1;
     drawMap();
   }
-  // Handle marker click (select / double-select to edit)
   if(!mDownMoved&&mMarkerDrag!==null){
     const mi=mapMarkers.indexOf(mMarkerDrag);
     if(selMarker===mi&&mi!==-1){
@@ -1589,38 +1606,32 @@ function drawMap(){
   // Dot grid
   mctx.fillStyle='rgba(0,0,0,0.05)';
   for(let x=0;x<mW;x+=28)for(let y=0;y<mH;y+=28){mctx.beginPath();mctx.arc(x,y,1,0,Math.PI*2);mctx.fill();}
-  
-  // Draw markers (large, visible icons)
+
+  // Draw markers
   mapMarkers.forEach((m,mi)=>{
     const x=m.x*mScale+mPan.x, y=m.y*mScale+mPan.y;
     const col=MARKER_COLORS[m.type]||'#888';
     const r=Math.max(26,32*mScale);
     const isSel=selMarker===mi;
     mctx.save();
-    // Glow for selected
     if(isSel){mctx.shadowBlur=20;mctx.shadowColor=col;}
-    // Background circle
     mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2);
     mctx.fillStyle=col+(isSel?'cc':'55'); mctx.fill();
     mctx.strokeStyle=col; mctx.lineWidth=isSel?3:2;
     mctx.beginPath(); mctx.arc(x,y,r,0,Math.PI*2); mctx.stroke();
     mctx.shadowBlur=0;
-    // Emoji icon — large and visible
     const emojiSize=Math.max(18,22*mScale);
     mctx.font=`${emojiSize}px serif`;
     mctx.textAlign='center'; mctx.textBaseline='middle';
     mctx.fillText(MARKER_ICONS[m.type]||'📍',x,y);
-    // Label below
     const labelY=y+r+Math.max(10,13*mScale);
     mctx.font=`bold ${Math.max(9,11*mScale)}px 'DM Sans',sans-serif`;
     mctx.textBaseline='top';
-    // Background for label
     const lw=mctx.measureText(m.customLabel||MARKER_LABELS[m.type]||m.type).width+8;
     mctx.fillStyle='rgba(0,0,0,0.65)';
     mctx.fillRect(x-lw/2,labelY-2,lw,Math.max(14,16*mScale));
     mctx.fillStyle='#fff';
     mctx.fillText(m.customLabel||MARKER_LABELS[m.type]||m.type,x,labelY);
-    // Delete X if selected
     if(isSel){
       mctx.font=`bold ${Math.max(10,12*mScale)}px sans-serif`;
       mctx.fillStyle='#fff';
@@ -1656,7 +1667,7 @@ function drawMap(){
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
       mctx.lineWidth=isSel?1.5:0.8;mctx.stroke();
-    } else { // round default
+    } else {
       mctx.beginPath();mctx.arc(x,y,r,0,Math.PI*2);
       mctx.fillStyle=isSel?'#0a0a0a':'#2e2e2e';mctx.fill();
       mctx.strokeStyle=isSel?'#b8973a':'rgba(255,255,255,0.1)';
@@ -1675,14 +1686,13 @@ function autoL(){
   mapTs=[];
   const cols=Math.ceil(Math.sqrt(n*1.3));
   const rows=Math.ceil(n/cols);
-  // Espacio lógico fijo de 1000x800 — independiente del canvas
   const LOGICAL_W=1000, LOGICAL_H=800;
   const cw=LOGICAL_W/cols, ch=LOGICAL_H/rows;
   for(let i=0;i<n;i++){
     const c=i%cols, ro=Math.floor(i/cols);
     mapTs.push({table_number:i+1,x:c*cw+cw/2,y:ro*ch+ch/2,shape:mShape,label:String(i+1)});
   }
-  centerM(); // centrar siempre al auto-generar
+  centerM();
 }
 
 function centerM(){
@@ -1696,7 +1706,6 @@ function centerM(){
   const scX=(mW-pad*2)/rangeX;
   const scY=(mH-pad*2)/rangeY;
   mScale=Math.max(0.1,Math.min(4,Math.min(scX,scY)*0.88));
-  // Centrar: el centro del bounding box queda en el centro del canvas
   const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
   mPan.x=mW/2 - cx*mScale;
   mPan.y=mH/2 - cy*mScale;
@@ -1715,7 +1724,6 @@ function updateQRSize(val){
   qrSize=parseInt(val);
   document.getElementById('qr-size-val').textContent=val+'px';
   renderDispPreview();
-  // Re-gen real QR with new size
   const id=curEv?curEv.id:'preview';
   const url=gURL(id);
   document.getElementById('qrcode').innerHTML='';
