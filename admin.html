@@ -1851,8 +1851,8 @@
       document.getElementById('qr-size-range').value = qrSize;
     }
 
-    function gURL(id) { return `https://mesaqr-guest.netlify.app/?e=${id}`; }
-    function dURL(id) { return `https://mesaqr-display.netlify.app/?e=${id}`; }
+    function gURL(id) { return `${location.origin}/guest.html?e=${id}`; }
+    function dURL(id) { return `${location.origin}/display.html?e=${id}`; }
 
     function dlQR() { const c = document.querySelector('#qrcode canvas'); if (!c) { toast('Genera primero'); return; } const a = document.createElement('a'); a.download = 'qr.png'; a.href = c.toDataURL(); a.click(); }
     function cpURL() { navigator.clipboard.writeText(document.getElementById('qu').textContent); toast('URL copiada'); }
