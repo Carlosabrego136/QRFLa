@@ -412,7 +412,7 @@ async function load(){
   const data=await r.json();
   if(!data||!data[0]){document.getElementById('d-name').textContent='Evento no encontrado';hide();return;}
   ev=data[0];
-  applyTheme();applyBg();buildQR();applyQRPosition();renderUI();initAnim(ev.animation||'particles');
+  applyTheme();applyBg();buildQR();applyQRPosition();applyTextPositions();renderUI();initAnim(ev.animation||'particles');
   setTimeout(hide,1000);
 }
 
@@ -452,6 +452,37 @@ function applyQRPosition(){
     card.classList.add('qr-absolute');
     card.style.left=ev.qr_x+'%';
     card.style.top=ev.qr_y+'%';
+  }
+}
+
+function applyTextPositions(){
+  // ev-type
+  const dType=document.getElementById('d-type');
+  if(dType&&ev.text_pos_evtype_x!=null&&ev.text_pos_evtype_y!=null){
+    dType.style.position='fixed';dType.style.zIndex='15';
+    dType.style.left=ev.text_pos_evtype_x+'%';dType.style.top=ev.text_pos_evtype_y+'%';
+    dType.style.transform='translate(-50%,-50%)';
+  }
+  // ev-name
+  const dName=document.getElementById('d-name');
+  if(dName&&ev.text_pos_evname_x!=null&&ev.text_pos_evname_y!=null){
+    dName.style.position='fixed';dName.style.zIndex='15';
+    dName.style.left=ev.text_pos_evname_x+'%';dName.style.top=ev.text_pos_evname_y+'%';
+    dName.style.transform='translate(-50%,-50%)';
+  }
+  // ev-date
+  const dDate=document.getElementById('d-date');
+  if(dDate&&ev.text_pos_evdate_x!=null&&ev.text_pos_evdate_y!=null){
+    dDate.style.position='fixed';dDate.style.zIndex='15';
+    dDate.style.left=ev.text_pos_evdate_x+'%';dDate.style.top=ev.text_pos_evdate_y+'%';
+    dDate.style.transform='translate(-50%,-50%)';
+  }
+  // welcome
+  const dWelcome=document.getElementById('d-welcome');
+  if(dWelcome&&ev.text_pos_welcome_x!=null&&ev.text_pos_welcome_y!=null){
+    dWelcome.style.position='fixed';dWelcome.style.zIndex='15';
+    dWelcome.style.left=ev.text_pos_welcome_x+'%';dWelcome.style.top=ev.text_pos_welcome_y+'%';
+    dWelcome.style.transform='translate(-50%,-50%)';
   }
 }
 

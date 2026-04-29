@@ -1000,6 +1000,54 @@
       margin-top: 10px;
     }
 
+    /* DRAGGABLE TEXT OVERLAYS */
+    .dp-overlay {
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+      z-index: 20;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      white-space: nowrap;
+      padding: 3px 6px;
+      border-radius: 2px;
+      transition: outline 0.1s;
+    }
+
+    .dp-overlay:hover {
+      outline: 1px dashed rgba(255, 255, 255, 0.5);
+    }
+
+    .dp-overlay.dp-selected {
+      outline: 1px solid rgba(255, 200, 50, 0.8);
+    }
+
+    .dp-overlay:active {
+      cursor: grabbing;
+    }
+
+    .dp-overlay-label {
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.42rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 2px 5px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .dp-overlay:hover .dp-overlay-label,
+    .dp-overlay.dp-selected .dp-overlay-label {
+      opacity: 1;
+    }
+
     .qr-size-row label {
       font-size: 0.65rem;
       color: var(--gray);
@@ -1482,6 +1530,8 @@
     function openNew() {
     curEv = null; curGs = []; mapTs = []; mapMarkers = []; bgD = null; bgT = null; selC = '#b8973a'; selA = 'particles';
     qrSize = 200;
+    qrPos = { x: 50, y: 50 };
+    textPos = { evtype:{x:50,y:22}, evname:{x:50,y:34}, evdate:{x:50,y:44}, welcome:{x:50,y:72}, qr:{x:50,y:57} };
     document.getElementById('mo-title').innerHTML = 'Nuevo <em>Evento</em>';
     ['en', 'ed', 'ev', 'eh', 'ew', 'mtn'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('et').value = 'Boda';
@@ -1514,6 +1564,14 @@
     selA = curEv.animation || 'particles';
     qrSize = curEv.qr_size || 200;
     if(curEv.qr_x!=null&&curEv.qr_y!=null){qrPos={x:curEv.qr_x,y:curEv.qr_y};}else{qrPos={x:50,y:50};}
+    // Restore draggable text positions
+    textPos = {
+      evtype:  { x: curEv.text_pos_evtype_x  ?? 50, y: curEv.text_pos_evtype_y  ?? 22 },
+      evname:  { x: curEv.text_pos_evname_x  ?? 50, y: curEv.text_pos_evname_y  ?? 34 },
+      evdate:  { x: curEv.text_pos_evdate_x  ?? 50, y: curEv.text_pos_evdate_y  ?? 44 },
+      welcome: { x: curEv.text_pos_welcome_x ?? 50, y: curEv.text_pos_welcome_y ?? 72 },
+      qr:      { x: curEv.qr_x ?? 50,               y: curEv.qr_y ?? 57 }
+    };
     document.getElementById('ec').value = selC;
     document.getElementById('ea').value = selA;
     document.getElementById('eta').value = curEv.table_anim || 'glow';
@@ -1856,58 +1914,110 @@
 
     function updateQRSize(v) { qrSize = parseInt(v); document.getElementById('qr-size-val').textContent = v + 'px'; renderDispPreview(); }
 
+    // Text element positions (percent x/y from top-left), defaults match display.html layout
+    let textPos = {
+      evtype:   { x: 50, y: 22 },
+      evname:   { x: 50, y: 34 },
+      evdate:   { x: 50, y: 44 },
+      welcome:  { x: 50, y: 72 },
+      qr:       { x: 50, y: 57 }
+    };
+
     function renderDispPreview() {
       const container = document.getElementById('disp-preview-container');
       const isH = document.getElementById('eo').value === 'horizontal';
-      const name = document.getElementById('eh').value || 'Nombre Festejado';
-      const type = document.getElementById('et').value;
-      const welcome = document.getElementById('ew').value || '¡Bienvenidos!';
+      const evName    = document.getElementById('eh').value || 'Nombre Festejado';
+      const evType    = document.getElementById('et').value || 'Evento';
+      const evDate    = document.getElementById('ed').value || '';
+      const evWelcome = document.getElementById('ew').value || '¡Bienvenidos!';
+      const eventName = document.getElementById('en').value || '';
 
       container.className = `disp-preview-wrap ${isH ? 'horiz' : 'vert'}`;
+
+      // Format date like display.html
+      let dateTxt = '';
+      if (evDate) { try { dateTxt = '📅 ' + evDate; } catch(e) { dateTxt = evDate; } }
+
+      // Full name like display.html: name + host em
+      const fullName = evName ? (eventName ? eventName + ' <em>' + evName + '</em>' : evName) : eventName || 'Mi Evento';
+
       container.innerHTML = `
-    <div class="disp-prev-bg">${bgD ? (bgT === 'video' ? `<video src="${bgD}" muted autoplay loop></video>` : `<img src="${bgD}">`) : ''}</div>
-    <div class="disp-prev-content ${isH ? 'horiz' : ''}">
-      <div class="disp-prev-top">
-        <div class="disp-prev-type" style="color:${selC}">${type}</div>
-        <div class="disp-prev-name">${name}</div>
-      </div>
-      <div class="disp-prev-bot">
-        <div class="disp-prev-welcome">${welcome}</div>
-      </div>
-    </div>
-    <div id="draggable-qr" style="position:absolute;left:${qrPos.x}%;top:${qrPos.y}%;transform:translate(-50%,-50%);cursor:grab;z-index:10;">
-      <div style="background:#fff;padding:6px;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+  <div class="disp-prev-bg" style="position:absolute;inset:0;z-index:0;">
+    ${bgD ? (bgT === 'video'
+      ? `<video src="${bgD}" muted autoplay loop style="width:100%;height:100%;object-fit:cover;opacity:0.5;"></video>`
+      : `<img src="${bgD}" style="width:100%;height:100%;object-fit:cover;opacity:0.5;">`)
+      : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#0a0a0a 0%,#1c1c1c 100%);"></div>'}
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0.15) 40%,rgba(0,0,0,0.55) 100%);"></div>
+  </div>
+
+  <!-- Tipo de evento -->
+  <div class="dp-overlay" id="dp-evtype" style="left:${textPos.evtype.x}%;top:${textPos.evtype.y}%;color:${selC};font-size:0.38rem;letter-spacing:0.22em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.2);padding:2px 8px;background:transparent;" data-key="evtype">
+    <span class="dp-overlay-label">Tipo de evento</span>
+    ${evType}
+  </div>
+
+  <!-- Nombre del evento / festejado -->
+  <div class="dp-overlay" id="dp-evname" style="left:${textPos.evname.x}%;top:${textPos.evname.y}%;font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:200;color:#fff;line-height:1.1;text-shadow:0 1px 8px rgba(0,0,0,0.5);max-width:90%;" data-key="evname">
+    <span class="dp-overlay-label">Nombre / Festejado</span>
+    ${fullName}
+  </div>
+
+  <!-- Fecha -->
+  <div class="dp-overlay" id="dp-evdate" style="left:${textPos.evdate.x}%;top:${textPos.evdate.y}%;font-size:0.34rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);" data-key="evdate">
+    <span class="dp-overlay-label">Fecha</span>
+    ${dateTxt || '📅 Fecha del evento'}
+  </div>
+
+  <!-- QR -->
+  <div class="dp-overlay" id="draggable-qr" style="left:${textPos.qr.x}%;top:${textPos.qr.y}%;" data-key="qr">
+    <span class="dp-overlay-label">QR (escaneable)</span>
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(4px);padding:6px;display:inline-block;">
+      <div style="background:#fff;padding:3px;display:inline-block;">
         <div id="prev-qr-box"></div>
-        <div style="font-size:0.3rem;text-align:center;opacity:0.6;letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;">Escanea tu mesa</div>
       </div>
+      <div style="font-size:0.28rem;text-align:center;color:rgba(255,255,255,0.55);letter-spacing:0.1em;text-transform:uppercase;margin-top:3px;">Escanea para encontrar tu mesa</div>
     </div>
-    <p style="position:absolute;bottom:4px;left:0;right:0;font-size:0.65rem;color:var(--gray);text-align:center;margin-top:6px;">Vista previa · ${isH ? 'Horizontal' : 'Vertical'} · QR: ${qrSize}px · Arrastra el QR</p>
+  </div>
+
+  <!-- Mensaje de bienvenida -->
+  <div class="dp-overlay" id="dp-welcome" style="left:${textPos.welcome.x}%;top:${textPos.welcome.y}%;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:0.5rem;color:rgba(255,255,255,0.65);max-width:80%;white-space:normal;text-align:center;" data-key="welcome">
+    <span class="dp-overlay-label">Mensaje de bienvenida</span>
+    ${evWelcome}
+  </div>
+
+  <p style="position:absolute;bottom:3px;left:0;right:0;font-size:0.5rem;color:rgba(255,255,255,0.3);text-align:center;z-index:30;pointer-events:none;">
+    Vista previa · ${isH ? 'Horizontal' : 'Vertical'} · QR: ${qrSize}px · Arrastra cualquier elemento
+  </p>
   `;
+
       setTimeout(() => {
-        try { new QRCode(document.getElementById('prev-qr-box'), { text: 'https://mesa-qr.com', width: 40, height: 40 }); } catch (x) { }
-        // Make QR draggable inside preview
-        const dragEl = document.getElementById('draggable-qr');
-        if (dragEl) {
+        try { new QRCode(document.getElementById('prev-qr-box'), { text: 'https://mesa-qr.com', width: 38, height: 38 }); } catch (x) { }
+        // Make all overlays draggable
+        container.querySelectorAll('.dp-overlay').forEach(el => {
+          const key = el.dataset.key;
           let dragging = false, startX, startY, startLeft, startTop;
-          dragEl.addEventListener('mousedown', e => {
+          el.addEventListener('mousedown', e => {
             dragging = true;
-            const rect = container.getBoundingClientRect();
+            el.classList.add('dp-selected');
+            container.querySelectorAll('.dp-overlay').forEach(o => { if(o!==el) o.classList.remove('dp-selected'); });
             startX = e.clientX; startY = e.clientY;
-            startLeft = qrPos.x; startTop = qrPos.y;
-            e.preventDefault();
+            startLeft = textPos[key].x; startTop = textPos[key].y;
+            e.preventDefault(); e.stopPropagation();
           });
           document.addEventListener('mousemove', e => {
             if (!dragging) return;
             const rect = container.getBoundingClientRect();
             const dx = (e.clientX - startX) / rect.width * 100;
             const dy = (e.clientY - startY) / rect.height * 100;
-            qrPos.x = Math.max(5, Math.min(95, startLeft + dx));
-            qrPos.y = Math.max(5, Math.min(95, startTop + dy));
-            dragEl.style.left = qrPos.x + '%';
-            dragEl.style.top = qrPos.y + '%';
+            textPos[key].x = Math.max(2, Math.min(98, startLeft + dx));
+            textPos[key].y = Math.max(2, Math.min(98, startTop + dy));
+            el.style.left = textPos[key].x + '%';
+            el.style.top  = textPos[key].y + '%';
+            // Keep backward-compat for qr
+            if (key === 'qr') { qrPos.x = textPos.qr.x; qrPos.y = textPos.qr.y; }
           });
           document.addEventListener('mouseup', () => { dragging = false; });
-        }
+        });
       }, 50);
     }
 
@@ -2209,6 +2319,14 @@
         qr_size: qrSize,
         qr_x: qrPos.x,
         qr_y: qrPos.y,
+        text_pos_evtype_x: textPos.evtype.x,
+        text_pos_evtype_y: textPos.evtype.y,
+        text_pos_evname_x: textPos.evname.x,
+        text_pos_evname_y: textPos.evname.y,
+        text_pos_evdate_x: textPos.evdate.x,
+        text_pos_evdate_y: textPos.evdate.y,
+        text_pos_welcome_x: textPos.welcome.x,
+        text_pos_welcome_y: textPos.welcome.y,
         map_markers: JSON.stringify(mapMarkers),
         map_scale: mScale,
         map_pan_x: mPan.x,
