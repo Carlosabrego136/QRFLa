@@ -824,8 +824,8 @@ function drawGuestMap(highlightN){
   try{if(ev.map_markers)markers=JSON.parse(ev.map_markers);}catch(x){}
 
   const hasItems=layout.length>0;
-  // Altura suficiente — no se corte
-  const H=Math.min(Math.max(hasItems?380:180, W*0.7), 480);
+  // Altura mas grande para mejor visualizacion
+  const H=Math.min(Math.max(hasItems?450:180, W*0.85), 550);
   canvas.width=W; canvas.height=H; canvas.style.height=H+'px';
   const ctx2=canvas.getContext('2d');
 
@@ -845,11 +845,11 @@ function drawGuestMap(highlightN){
   const minY=Math.min(...allY), maxY=Math.max(...allY);
   const rangeX=maxX-minX||1, rangeY=maxY-minY||1;
 
-  // Escala que asegura que TODO cabe dentro con padding generoso
-  const pad=40;
+  // Escala mas pequena para dar mas espacio entre mesas
+  const pad=60;
   const scX=(W-pad*2)/rangeX;
   const scY=(H-pad*2)/rangeY;
-  const sc=Math.min(scX,scY)*0.88;
+  const sc=Math.min(scX,scY)*0.65; // Reducido de 0.88 a 0.65 para mas espacio
 
   // Centrado exacto
   const usedW=rangeX*sc, usedH=rangeY*sc;
@@ -859,8 +859,8 @@ function drawGuestMap(highlightN){
   function tx(x){return x*sc+offX;}
   function ty(y){return y*sc+offY;}
 
-  // Tamaño de mesa proporcional, legible
-  const r=Math.max(10,Math.min(22,sc*18));
+  // Tamaño de mesa mas pequeno para que no se encimen
+  const r=Math.max(12,Math.min(18,sc*12));
   const ac2=ev.color||'#b8973a';
 
   function drawFrame(pf){

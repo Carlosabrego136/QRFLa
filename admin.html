@@ -1562,6 +1562,7 @@
     renderGs();
     
     mapTs = await db.get('table_layout', `event_id=eq.${id}`);
+    console.log('[v0] editEv - mapTs cargadas:', mapTs.length, mapTs);
     
     // map_markers is stored as JSON text in the events table
     try {
@@ -2311,11 +2312,24 @@
         await db.post('guests', gd);
       }
 
+      // Solo actualizar mesas si hay mesas en mapTs
+      // Si mapTs esta vacio pero es un evento existente, cargar las mesas actuales primero
+      console.log('[v0] mapTs antes de guardar:', mapTs.length, mapTs);
+      if (mapTs.length === 0 && curEv && curEv.id) {
+        // Cargar mesas existentes de la BD para no perderlas
+        const existingTables = await db.get('table_layout', `event_id=eq.${evId}`);
+        console.log('[v0] Cargando mesas existentes:', existingTables.length);
+        if (existingTables && existingTables.length > 0) {
+          mapTs = existingTables;
+        }
+      }
+      
       await db.dw('table_layout', 'event_id', evId);
       for (const t of mapTs) {
         const td = { event_id: evId, table_number: parseInt(t.table_number) || 1, x: t.x, y: t.y, shape: t.shape || 'round', label: t.label || null, color: t.color || null };
         await db.post('table_layout', td);
       }
+      console.log('[v0] Mesas guardadas:', mapTs.length);
 
       toast('✦ Evento guardado');
       genQR();
