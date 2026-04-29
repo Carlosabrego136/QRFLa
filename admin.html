@@ -1167,8 +1167,8 @@
             <div class="ag" id="ag">
               <div class="ao on" data-a="particles" onclick="pAnim(this)"><span class="ao-i">✦</span>Partículas</div>
               <div class="ao" data-a="petals" onclick="pAnim(this)"><span class="ao-i">◌</span>Pétalos</div>
-              <div class="ao" data-a="fireworks" onclick="pAnim(this)"><span class="ao-i">◈</span>Fuegos</div>
-              <div class="ao" data-a="snow" onclick="pAnim(this)"><span class="ao-i">❄</span>Nieve</div>
+              <div class="ao" data-a="butterflies" onclick="pAnim(this)"><span class="ao-i">🦋</span>Mariposas</div>
+              <div class="ao" data-a="stars" onclick="pAnim(this)"><span class="ao-i">⭐</span>Estrellas</div>
               <div class="ao" data-a="bokeh" onclick="pAnim(this)"><span class="ao-i">◎</span>Bokeh</div>
               <div class="ao" data-a="none" onclick="pAnim(this)"><span class="ao-i">—</span>Ninguna</div>
             </div>
@@ -1929,66 +1929,257 @@
     function dlDisplayVideo() {
       const container = document.getElementById('disp-preview-container');
       if (!container || !container.querySelector) { toast('Genera la vista previa primero'); return; }
-      if (!('MediaRecorder' in window)) { toast('Tu navegador no soporta grabación de video'); return; }
-      toast('Grabando 5 segundos…');
-      // Create canvas from preview
-      const w = container.offsetWidth, h = container.offsetHeight;
+      if (!('MediaRecorder' in window)) { toast('Tu navegador no soporta grabación'); return; }
+
+      // HD canvas — 1080p vertical or horizontal
+      const isH = document.getElementById('eo').value === 'horizontal';
+      const VW = isH ? 1920 : 1080;
+      const VH = isH ? 1080 : 1920;
+
       const canvas = document.createElement('canvas');
-      canvas.width = w * 2; canvas.height = h * 2;
+      canvas.width = VW; canvas.height = VH;
       const ctx = canvas.getContext('2d');
+
+      // Collect real data from form
+      const evName   = document.getElementById('eh').value || '';
+      const evType   = document.getElementById('et').value || '';
+      const evWelc   = document.getElementById('ew').value || '';
+      const accentC  = selC || '#b8973a';
+
+      // Try best mimeType
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+          ? 'video/webm;codecs=vp8'
+          : 'video/webm';
+
       const stream = canvas.captureStream(30);
       const chunks = [];
-      const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-      rec.ondataavailable = e => chunks.push(e.data);
+      const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8000000 });
+      rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       rec.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `pantalla_${(curEv ? curEv.name : 'evento').replace(/[^a-z0-9]/gi,'_')}.webm`;
-        a.click(); toast('Video descargado');
+        const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `pantalla_${(curEv ? curEv.name : 'evento').replace(/[^a-z0-9áéíóúñ]/gi,'_')}.webm`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        toast('✓ Video descargado');
       };
-      rec.start();
-      // Draw frames from the preview using html2canvas approach (via DOM snapshot)
-      let frames = 0;
-      const maxFrames = 150; // 5s at 30fps
-      function drawFrame() {
-        if (frames >= maxFrames) { rec.stop(); return; }
-        // Draw background
-        ctx.fillStyle = '#111';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // Draw bg image if available
-        if (bgD && bgT === 'image') {
-          const img = container.querySelector('.disp-prev-bg img');
-          if (img && img.complete) { ctx.globalAlpha = 0.45; ctx.drawImage(img, 0, 0, canvas.width, canvas.height); ctx.globalAlpha = 1; }
+
+      // Preload bg image if any
+      let bgImg = null;
+      const bgImgEl = container.querySelector('.disp-prev-bg img');
+      const bgVidEl = container.querySelector('.disp-prev-bg video');
+
+      function startRecording() {
+        // Get real QR canvas from the preview
+        const qrCanvasEl = container.querySelector('#prev-qr-box canvas');
+
+        const TOTAL_MS = 8000; // 8 seconds
+        const FPS = 30;
+        const TOTAL_FRAMES = (TOTAL_MS / 1000) * FPS;
+        let frame = 0;
+        let particles = [];
+
+        // Init animation particles based on selA
+        function initParticles() {
+          particles = [];
+          const count = selA === 'butterflies' ? 18 : selA === 'stars' ? 40 : selA === 'particles' ? 60 : selA === 'petals' ? 30 : selA === 'bokeh' ? 20 : 0;
+          for (let i = 0; i < count; i++) {
+            particles.push({
+              x: Math.random() * VW,
+              y: Math.random() * VH,
+              vx: (Math.random() - 0.5) * (selA === 'butterflies' ? 2.5 : 1.5),
+              vy: selA === 'butterflies' ? (Math.random() - 0.3) * 1.8 : (Math.random() - 0.8) * 2,
+              size: selA === 'bokeh' ? Math.random() * 40 + 10 : Math.random() * 8 + 4,
+              alpha: Math.random() * 0.7 + 0.3,
+              phase: Math.random() * Math.PI * 2,
+              color: selA === 'stars' ? `hsl(${Math.random()*60+30},100%,${Math.random()*30+70}%)` : accentC
+            });
+          }
         }
-        // Draw event name
-        const name = document.getElementById('eh').value || 'Nombre Festejado';
-        const type = document.getElementById('et').value;
-        ctx.fillStyle = selC;
-        ctx.font = `${12 * 2}px DM Sans`;
-        ctx.textAlign = 'center';
-        ctx.fillText(type.toUpperCase(), canvas.width / 2, canvas.height * 0.25);
-        ctx.fillStyle = '#fff';
-        ctx.font = `300 ${24 * 2}px Cormorant Garamond, serif`;
-        ctx.fillText(name, canvas.width / 2, canvas.height * 0.35);
-        // Draw QR placeholder
-        const qrEl = container.querySelector('#prev-qr-box canvas');
-        if (qrEl) {
-          const qx = (qrPos.x / 100) * canvas.width;
-          const qy = (qrPos.y / 100) * canvas.height;
-          const qsz = 80 * 2;
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(qx - qsz/2 - 6, qy - qsz/2 - 6, qsz + 12, qsz + 12);
-          ctx.drawImage(qrEl, qx - qsz/2, qy - qsz/2, qsz, qsz);
+        initParticles();
+
+        rec.start(100);
+
+        function drawFrameLoop() {
+          if (frame >= TOTAL_FRAMES) { rec.stop(); return; }
+          const t = frame / FPS;
+
+          // --- Background ---
+          ctx.fillStyle = '#0d0d14';
+          ctx.fillRect(0, 0, VW, VH);
+
+          // BG image
+          if (bgImg && bgImg.complete && bgImg.naturalWidth) {
+            ctx.save(); ctx.globalAlpha = 0.55;
+            ctx.drawImage(bgImg, 0, 0, VW, VH);
+            ctx.restore();
+          } else if (bgVidEl && bgVidEl.readyState >= 2) {
+            ctx.save(); ctx.globalAlpha = 0.55;
+            ctx.drawImage(bgVidEl, 0, 0, VW, VH);
+            ctx.restore();
+          }
+
+          // Dark overlay gradient
+          const grad = ctx.createLinearGradient(0, 0, 0, VH);
+          grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+          grad.addColorStop(0.5, 'rgba(0,0,0,0.25)');
+          grad.addColorStop(1, 'rgba(0,0,0,0.65)');
+          ctx.fillStyle = grad; ctx.fillRect(0, 0, VW, VH);
+
+          // --- Particles / Animations ---
+          particles.forEach((p, i) => {
+            p.phase += 0.06;
+            if (selA === 'butterflies') {
+              p.x += p.vx + Math.sin(p.phase) * 1.5;
+              p.y += p.vy + Math.cos(p.phase * 0.7) * 1.2;
+              // Draw butterfly shape
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate(Math.sin(p.phase) * 0.4);
+              ctx.globalAlpha = p.alpha * (0.7 + 0.3 * Math.sin(p.phase));
+              // Wing left
+              ctx.beginPath();
+              ctx.ellipse(-p.size * 0.8, 0, p.size * 0.9, p.size * 0.55, -0.4, 0, Math.PI * 2);
+              ctx.fillStyle = accentC; ctx.fill();
+              // Wing right
+              ctx.beginPath();
+              ctx.ellipse(p.size * 0.8, 0, p.size * 0.9, p.size * 0.55, 0.4, 0, Math.PI * 2);
+              ctx.fill();
+              // Body
+              ctx.beginPath(); ctx.ellipse(0, 0, p.size * 0.15, p.size * 0.6, 0, 0, Math.PI * 2);
+              ctx.fillStyle = '#2a1a0a'; ctx.fill();
+              ctx.restore();
+            } else if (selA === 'stars') {
+              p.x += p.vx * 0.3;
+              p.y += p.vy * 0.4;
+              const twinkle = 0.4 + 0.6 * Math.abs(Math.sin(p.phase));
+              ctx.save();
+              ctx.translate(p.x, p.y);
+              ctx.rotate(p.phase * 0.3);
+              ctx.globalAlpha = p.alpha * twinkle;
+              // 4-point star
+              ctx.beginPath();
+              for (let s = 0; s < 8; s++) {
+                const ang = (s * Math.PI) / 4;
+                const r = s % 2 === 0 ? p.size : p.size * 0.38;
+                s === 0 ? ctx.moveTo(Math.cos(ang)*r, Math.sin(ang)*r) : ctx.lineTo(Math.cos(ang)*r, Math.sin(ang)*r);
+              }
+              ctx.closePath();
+              ctx.fillStyle = p.color; ctx.fill();
+              // Glow
+              const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 2);
+              sg.addColorStop(0, `rgba(255,255,200,${0.3*twinkle})`);
+              sg.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.beginPath(); ctx.arc(0, 0, p.size * 2, 0, Math.PI * 2);
+              ctx.fillStyle = sg; ctx.fill();
+              ctx.restore();
+            } else if (selA === 'particles') {
+              p.x += p.vx; p.y += p.vy;
+              ctx.save(); ctx.globalAlpha = p.alpha * (0.5 + 0.5 * Math.sin(p.phase));
+              ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+              ctx.fillStyle = accentC; ctx.fill(); ctx.restore();
+            } else if (selA === 'petals') {
+              p.x += p.vx + Math.sin(p.phase * 0.5) * 1.2;
+              p.y += Math.abs(p.vy) * 0.7;
+              ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.phase);
+              ctx.globalAlpha = p.alpha;
+              ctx.beginPath(); ctx.ellipse(0, 0, p.size * 0.5, p.size, 0, 0, Math.PI * 2);
+              ctx.fillStyle = '#f4b8c8'; ctx.fill(); ctx.restore();
+            } else if (selA === 'bokeh') {
+              p.x += p.vx * 0.3; p.y += p.vy * 0.3;
+              const bg2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+              bg2.addColorStop(0, `rgba(255,240,180,${p.alpha * 0.35})`);
+              bg2.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+              ctx.fillStyle = bg2; ctx.fill();
+            }
+            // Wrap around
+            if (p.x < -100) p.x = VW + 50;
+            if (p.x > VW + 100) p.x = -50;
+            if (p.y < -100) p.y = VH + 50;
+            if (p.y > VH + 100) p.y = -50;
+          });
+
+          // --- Event type label ---
+          if (evType) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.font = `300 ${VW * 0.022}px DM Sans, sans-serif`;
+            ctx.letterSpacing = '0.25em';
+            ctx.fillStyle = accentC;
+            ctx.globalAlpha = 0.85;
+            ctx.fillText(evType.toUpperCase(), VW / 2, isH ? VH * 0.3 : VH * 0.2);
+            ctx.restore();
+          }
+
+          // --- Decorative line ---
+          ctx.save();
+          const lineW = VW * 0.18;
+          ctx.strokeStyle = accentC; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+          ctx.beginPath(); ctx.moveTo(VW/2 - lineW, isH ? VH*0.34 : VH*0.23); ctx.lineTo(VW/2 + lineW, isH ? VH*0.34 : VH*0.23); ctx.stroke();
+          ctx.restore();
+
+          // --- Event name ---
+          if (evName) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            const nameFontSize = VW * (isH ? 0.055 : 0.065);
+            ctx.font = `300 ${nameFontSize}px Cormorant Garamond, Georgia, serif`;
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.95 + 0.05 * Math.sin(t * 0.8);
+            ctx.shadowColor = accentC; ctx.shadowBlur = 30;
+            ctx.fillText(evName, VW / 2, isH ? VH * 0.42 : VH * 0.31);
+            ctx.restore();
+          }
+
+          // --- QR code (from preview canvas) ---
+          const qrSize2 = VW * 0.18;
+          const qrX = (qrPos.x / 100) * VW;
+          const qrY = (qrPos.y / 100) * VH;
+          if (qrCanvasEl) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 20;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(qrX - qrSize2/2 - 10, qrY - qrSize2/2 - 10, qrSize2 + 20, qrSize2 + 20 + 24);
+            ctx.drawImage(qrCanvasEl, qrX - qrSize2/2, qrY - qrSize2/2, qrSize2, qrSize2);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#333';
+            ctx.font = `${VW * 0.012}px DM Sans, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('ESCANEA TU MESA', qrX, qrY + qrSize2/2 + 18);
+            ctx.restore();
+          }
+
+          // --- Welcome message ---
+          if (evWelc) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.font = `italic ${VW * 0.022}px Cormorant Garamond, Georgia, serif`;
+            ctx.fillStyle = 'rgba(255,255,255,0.65)';
+            ctx.fillText(evWelc, VW / 2, isH ? VH * 0.8 : VH * 0.88);
+            ctx.restore();
+          }
+
+          frame++;
+          requestAnimationFrame(drawFrameLoop);
         }
-        // Welcome
-        const welcome = document.getElementById('ew').value || '¡Bienvenidos!';
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = `italic ${10 * 2}px Cormorant Garamond, serif`;
-        ctx.fillText(welcome, canvas.width / 2, canvas.height * 0.82);
-        frames++;
-        requestAnimationFrame(drawFrame);
+
+        drawFrameLoop();
+        toast('⏺ Grabando 8 seg en HD…');
       }
-      drawFrame();
+
+      // Preload bg image before starting
+      if (bgImgEl && bgImgEl.src) {
+        bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        bgImg.onload = startRecording;
+        bgImg.onerror = startRecording;
+        bgImg.src = bgImgEl.src;
+      } else {
+        startRecording();
+      }
     }
     function cpURL() { navigator.clipboard.writeText(document.getElementById('qu').textContent); toast('URL copiada'); }
     function cpURLById(id) { navigator.clipboard.writeText(gURL(id)); toast('URL copiada'); }
