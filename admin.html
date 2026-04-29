@@ -2311,8 +2311,6 @@
         type: document.getElementById('et').value,
         orientation: document.getElementById('eo').value,
         table_count: parseInt(document.getElementById('etn').value) || 20,
-        bg_url: bgD,
-        bg_type: bgT,
         color: selC,
         animation: selA,
         table_anim: document.getElementById('eta').value,
@@ -2333,14 +2331,32 @@
         map_pan_y: mPan.y
       };
 
+      // Solo incluir bg_url/bg_type si el usuario subió un fondo nuevo en esta sesión
+      // (bgD distinto al que ya tenía curEv guardado en Supabase).
+      // Esto evita sobreescribir con null o con base64 corrupto al editar.
+      const bgChanged = bgD !== (curEv ? curEv.bg_url : null);
+      if (bgChanged) {
+        data.bg_url = bgD;
+        data.bg_type = bgT;
+      }
+
       if (!data.name) { toast('Nombre requerido'); return; }
 
       let evId;
       if (curEv) {
         evId = curEv.id;
         const res = await db.patch('events', evId, data);
-        if (res && res.length) curEv = res[0];
+        // Actualizar curEv manualmente con los datos que sí guardamos
+        if (res && res.length) {
+          curEv = res[0];
+        } else {
+          // Supabase a veces no devuelve filas en PATCH — actualizar localmente
+          Object.assign(curEv, data);
+          if (bgChanged) { curEv.bg_url = bgD; curEv.bg_type = bgT; }
+        }
       } else {
+        data.bg_url = bgD;
+        data.bg_type = bgT;
         const res = await db.post('events', data);
         if (!res || !res.length) { toast('Error al crear evento'); return; }
         evId = res[0].id;
