@@ -1449,7 +1449,7 @@
       evs.forEach(e => { byEvent[e.id] = { event: e, guests: [] }; });
       all.forEach(g => {
         if (byEvent[g.event_id]) byEvent[g.event_id].guests.push(g);
-        else byEvent[g.event_id] = { event: { name: 'Evento desconocido', id: g.event_id }, guests: [g] };
+        // else: ignorar invitados sin evento válido (evento eliminado)
       });
 
       let html = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">`;
