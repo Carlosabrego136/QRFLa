@@ -1585,8 +1585,8 @@
       ctab = n;
       if (n === 3) {
         resizeM();
-        // Auto centrar el mapa si hay mesas o marcadores existentes
-        setTimeout(() => { if (mapTs.length || mapMarkers.length) centerM(); }, 150);
+        // Auto centrar el mapa si hay mesas o marcadores existentes, preservando el zoom actual
+        setTimeout(() => { if (mapTs.length || mapMarkers.length) centerM(true); }, 150);
       }
       if (n === 4) genQR();
       }
@@ -1853,18 +1853,44 @@
     function clearM() { if (confirm('¿Limpiar mapa?')) { mapTs = []; mapMarkers = []; drawMap(); } }
     function autoL() {
       const n = parseInt(document.getElementById('etn').value) || 20;
-      mapTs = [];
-      const cols = Math.ceil(Math.sqrt(n * 1.5));
-      for (let i = 0; i < n; i++) {
-        const r = Math.floor(i / cols), c = i % cols;
-        mapTs.push({ 
-          table_number: i + 1, 
-          x: (c + 1) * (GRID_SIZE * 2), 
-          y: (r + 1) * (GRID_SIZE * 2), 
-          shape: mShape 
-        });
+      // Preservar mesas existentes, solo agregar las que faltan
+      const existingNums = new Set(mapTs.map(t => t.table_number));
+      const missingNums = [];
+      for (let i = 1; i <= n; i++) {
+        if (!existingNums.has(i)) missingNums.push(i);
       }
-      centerM();
+      if (missingNums.length === 0 && mapTs.length > 0) {
+        centerM(true);
+        return;
+      }
+      // Si no hay ninguna mesa existente, layout completo desde cero
+      if (mapTs.length === 0) {
+        const cols = Math.ceil(Math.sqrt(n * 1.5));
+        for (let i = 0; i < n; i++) {
+          const r = Math.floor(i / cols), c = i % cols;
+          mapTs.push({ 
+            table_number: i + 1, 
+            x: (c + 1) * (GRID_SIZE * 2), 
+            y: (r + 1) * (GRID_SIZE * 2), 
+            shape: mShape 
+          });
+        }
+        centerM();
+      } else {
+        // Agregar solo las mesas que faltan en espacios vacios
+        const cols = Math.ceil(Math.sqrt(n * 1.5));
+        missingNums.forEach((num, idx) => {
+          const i = num - 1;
+          const r = Math.floor(i / cols), c = i % cols;
+          mapTs.push({ 
+            table_number: num, 
+            x: (c + 1) * (GRID_SIZE * 2), 
+            y: (r + 1) * (GRID_SIZE * 2), 
+            shape: mShape 
+          });
+        });
+        centerM(true);
+      }
     }
 
     function toggleEntryMode(type) {
@@ -2316,13 +2342,14 @@
       }
 
       // Si mapTs esta vacio pero es un evento existente, cargar las mesas actuales primero para no perderlas
+      // IMPORTANTE: hacer esto ANTES del delete (db.dw), no despues
       if (mapTs.length === 0 && curEv && curEv.id) {
         const existingTables = await db.get('table_layout', `event_id=eq.${evId}`);
         if (existingTables && existingTables.length > 0) {
           mapTs = existingTables;
         }
       }
-      
+
       await db.dw('table_layout', 'event_id', evId);
       for (const t of mapTs) {
         const td = { event_id: evId, table_number: parseInt(t.table_number) || 1, x: t.x, y: t.y, shape: t.shape || 'round', label: t.label || null, color: t.color || null };
