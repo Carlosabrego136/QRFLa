@@ -1513,6 +1513,7 @@
     selC = curEv.color || '#b8973a';
     selA = curEv.animation || 'particles';
     qrSize = curEv.qr_size || 200;
+    if(curEv.qr_x!=null&&curEv.qr_y!=null){qrPos={x:curEv.qr_x,y:curEv.qr_y};}else{qrPos={x:50,y:50};}
     document.getElementById('ec').value = selC;
     document.getElementById('ea').value = selA;
     document.getElementById('eta').value = curEv.table_anim || 'glow';
@@ -2206,6 +2207,8 @@
         animation: selA,
         table_anim: document.getElementById('eta').value,
         qr_size: qrSize,
+        qr_x: qrPos.x,
+        qr_y: qrPos.y,
         map_markers: JSON.stringify(mapMarkers),
         map_scale: mScale,
         map_pan_x: mPan.x,
